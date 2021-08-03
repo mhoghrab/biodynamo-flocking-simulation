@@ -13,17 +13,17 @@ class DirectionArray {
   double directions[n][3];
 
   DirectionArray() {
-    float goldenRatio = (1 + sqrt(5)) / 2;
-    float angleIncrement = M_PI * 2 * goldenRatio;
+    double goldenRatio = (1 + sqrt(5)) / 2;
+    double angleIncrement = M_PI * 2 * goldenRatio;
 
     for (int i = 0; i < n; i++) {
-      float t = (float) i / n;
-      float inclination = acos(1 - 2 * t);
-      float azimuth = angleIncrement * i;
+      double t = (double) i / n;
+      double inclination = acos(1 - 2 * t);
+      double azimuth = angleIncrement * i;
 
-      float x = sin(inclination) * cos(azimuth);
-      float y = sin(inclination) * sin(azimuth);
-      float z = cos(inclination);
+      double x = sin(inclination) * cos(azimuth);
+      double y = sin(inclination) * sin(azimuth);
+      double z = cos(inclination);
 
       directions[i][0] = x;
       directions[i][1] = y;
