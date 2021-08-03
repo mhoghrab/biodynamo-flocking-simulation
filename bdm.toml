@@ -1,0 +1,12 @@
+[visualization]
+export = true
+interval = 1
+
+    [[visualize_agent]]
+    name = "Boid"
+    additional_data_members = [ "actualDiameter_"]
+
+[simulation]
+bound_space = true
+min_bound = 0
+max_bound = 1800
