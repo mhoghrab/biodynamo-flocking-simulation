@@ -3,7 +3,8 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "/home/mhoghrab/biodynamo-v1.0.8/**"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",

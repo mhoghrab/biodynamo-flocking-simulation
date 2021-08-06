@@ -10,3 +10,9 @@ interval = 1
 bound_space = true
 min_bound = 0
 max_bound = 1800
+
+[experimental]
+compute_target = "opencl"
+
+[development]
+statistics = true

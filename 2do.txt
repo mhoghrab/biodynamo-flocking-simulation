@@ -1,0 +1,10 @@
+update actual boid data at once for all boids
+
+parameter auslagern
+
+// directions array static dings, dass das nur einmal berechnet werden muss und immer auf das verwiesen wird#
+
+in welcher Reihenfolge werden Behaviours ausgeführt?
+
+L2F functor nicht in der aktuellen version?
+
