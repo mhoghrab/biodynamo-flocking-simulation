@@ -9,7 +9,7 @@ interval = 1
 [simulation]
 bound_space = true
 min_bound = 0
-max_bound = 1800
+max_bound = 2000
 
 [experimental]
 compute_target = "opencl"

@@ -7,30 +7,31 @@
 [1mGeneral[0m
 Command				: ./build/flocking_simulation 
 Simulation name			: flocking_simulation
-Total simulation runtime	: 9425 ms
-Peak memory usage (MB)		: 547.109
+Total simulation runtime	: 13151 ms
+Peak memory usage (MB)		: 553
 Number of iterations executed	: 400
-Number of agents		: 600
+Number of agents		: 2000
 Output directory		: output/flocking_simulation
-  size				: 15M
+  size				: 40M
 BioDynaMo version:		: v1.0-8-g92bc58ec
 
 ***********************************************
 
 [1mTotal execution time per operation[0m
-agent ops: 763
+UpdateOp: 53
+agent ops: 3772
 behavior: 0
 bound space: 0
 diffusion: 0
 discretization: 0
-load balancing: 0
+load balancing: 1
 mechanical forces: 0
 propagate staticness: 0
-set up iteration: 59
-tear down iteration: 10
-update environment: 18
-update staticness: 0
-visualize: 6219
+set up iteration: 38
+tear down iteration: 15
+update environment: 27
+update staticness: 1
+visualize: 7012
 
 ***********************************************
 
@@ -44,7 +45,7 @@ num threads per numa	: 8
 ***********************************************
 
 [1mAgents per numa node[0m
-numa node 0 -> size: 600
+numa node 0 -> size: 2000
 
 ***********************************************
 
@@ -67,7 +68,7 @@ numa node 0 -> size: 600
         "export_visualization": true,
         "insitu_visualization": false,
         "mapped_data_array_mode": 0,
-        "max_bound": 1800,
+        "max_bound": 2000,
         "mem_mgr_aligned_pages_shift": 8,
         "mem_mgr_growth_rate": 1.1,
         "mem_mgr_max_mem_per_thread": 10485760,
@@ -103,6 +104,21 @@ numa node 0 -> size: 600
             "_typename": "map<string,set<string> >"
         },
         "visualize_diffusion": []
+    },
+    "bdm::SimParam": {
+        "_typename": "bdm::SimParam",
+        "actualDiameter_": 15,
+        "alignmentWeight": 2,
+        "avoidDomainBoundaryWeight": 25,
+        "cohesionWeight": 1,
+        "crusingSpeed": 12,
+        "maxForce_": 3,
+        "maxSpeed_": 15,
+        "minSpeed_": 8,
+        "obstacleAvoidanceWeight": 5,
+        "perceptionAngle_": 1.88495559215388,
+        "perceptionRadius_": 150,
+        "seperationWeight": 1.5
     }
 }
 ***********************************************

@@ -1,0 +1,33 @@
+{
+    "bdm::Param": {
+        "bound_space": true,
+        "compute_target": "opencl",
+        "export_visualization": true,
+        "max_bound": 1800,
+        "min_bound": 0,
+        "simulation_step_freq": 10,
+        "simulation_time_step": 0.01,
+        "statistics": true,
+        "visualization_interval": 1,
+        "visualize_agents": {
+            "Boid": [
+                "actualDiameter_"
+            ]
+        },
+        "visualize_diffusion": []
+    },
+    "bdm::SimParam": {
+        "actualDiameter_": 15,
+        "alignmentWeight": 2,
+        "avoidDomainBoundaryWeight": 25,
+        "cohesionWeight": 1,
+        "crusingSpeed": 15,
+        "maxForce_": 3,
+        "maxSpeed_": 20,
+        "minSpeed_": 10,
+        "obstacleAvoidanceWeight": 5,
+        "perceptionAngle_": 0.23873241463,
+        "perceptionRadius_": 0,
+        "seperationWeight": 1.5
+    }
+}

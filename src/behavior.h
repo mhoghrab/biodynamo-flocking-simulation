@@ -8,9 +8,9 @@
 
 namespace bdm {
 
-// -----------------------------------------------------------------------------
+///////////////////////////////////////////////////////////////////////////////
 // Functor class needed to calculate neighbor data in ForEachNeighbor call
-// -----------------------------------------------------------------------------
+///////////////////////////////////////////////////////////////////////////////
 class CalculateNeighborData : public Functor<void, Agent*, double> {
  public:
   CalculateNeighborData(Boid* self) : self_(self) {}
@@ -38,9 +38,10 @@ class CalculateNeighborData : public Functor<void, Agent*, double> {
     }
   }
 
-  Double3 GetAvgPos() {
+  Double3 GetAvgPosDirection() {
     if (n != 0) {
       sum_pos /= n;
+      sum_pos -= boid_pos;
     }
     return sum_pos;
   }
@@ -68,6 +69,9 @@ class CalculateNeighborData : public Functor<void, Agent*, double> {
   int n = 0;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// Flocking Behaviour
+///////////////////////////////////////////////////////////////////////////////
 struct Flocking : public Behavior {
   BDM_BEHAVIOR_HEADER(Flocking, Behavior, 1);
 
@@ -78,60 +82,32 @@ struct Flocking : public Behavior {
     double perception_radius = boid->GetPerceptionRadius();
     double perception_radius_squared = perception_radius * perception_radius;
 
-    Double3 const boid_position = boid->GetPosition();
-
-    // -----------------------------------------------------------------------------
+    ///////////////////////////////////////////////////////////////////////////////
     // Calculate seperationForce, alignmentForce, cohesionForce,
     // avoidDomainBoundaryForce
-    // -----------------------------------------------------------------------------
-
     CalculateNeighborData NeighborData(boid);
     ctxt->ForEachNeighbor(NeighborData, *boid, perception_radius_squared);
 
     Double3 seperationForce = boid->SteerTowards(NeighborData.GetDiffPos());
     Double3 alignmentForce = boid->SteerTowards(NeighborData.GetAvgVel());
     Double3 cohesionForce =
-        boid->SteerTowards(NeighborData.GetAvgPos() - boid_position);
+        boid->SteerTowards(NeighborData.GetAvgPosDirection());
     Double3 avoidDomainBoundaryForce = boid->AvoidDomainBoundary();
-    // Double3 ObstacleAvoidanceForce = boid->ObstacleAvoidanceForce();
 
-    // -----------------------------------------------------------------------------
-    // Update Position, velocity, acceleration of boid
-    // -----------------------------------------------------------------------------
-
+    ///////////////////////////////////////////////////////////////////////////////
+    // Update newVelocity_, newVelocity_, acceleration_ of boid
     boid->ResetAcceleration();
     boid->AccelerationAccumulator(seperationForce * boid->seperationWeight);
     boid->AccelerationAccumulator(alignmentForce * boid->alignmentWeight);
     boid->AccelerationAccumulator(cohesionForce * boid->cohesionWeight);
     boid->AccelerationAccumulator(avoidDomainBoundaryForce *
                                   boid->avoidDomainBoundaryWeight);
-    // boid->AccelerationAccumulator(ObstacleAvoidanceForce *
-    //                               boid->obstacleAvoidanceWeight);
 
-    boid->UpdateVelocity();
-    boid->UpdatePosition();
+    boid->UpdateNewVelocity();
+    boid->UpdateNewPosition();
   }
 };
 
-// struct PredatorHunting : public Behavior {
-//   BDM_BEHAVIOR_HEADER(PredatorHunting, Behavior, 1);
-
-//   void Run(Agent* agent) override {
-//     auto functor = L2F([&](Agent * neighbor, double squared_distance)) {
-//       if (neighbor->GetDiameter() < threshold) {
-//         std::cout << neighbor->GetUid() << std::endl;
-//       }
-//     };
-
-//     auto* boid = dynamic_cast<Boid*>(agent);
-//     auto* ctxt = Simulation::GetActive()->GetExecutionContext();
-
-//     double perception_radius = boid->GetPerceptionRadius();
-//     double perception_radius_squared = perception_radius * perception_radius;
-
-//     Double3 const boid_position = boid->GetPosition();
-//   }
-// };
 }  // namespace bdm
 
 #endif  // BEHAVIOR_H_

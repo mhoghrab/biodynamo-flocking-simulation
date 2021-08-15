@@ -1,40 +1,65 @@
 #include "boid.h"
 #include "core/container/math_array.h"
-#include "direction_array.h"
+#include "flocking_simulation.h"
 
 using namespace bdm;
 
-Double3 Boid::UpperLimit(Double3 vector, double limit) {
-  if (vector.Norm() > limit) {
-    vector = vector.Normalize() * limit;
+void Boid::Initialize() {
+  const auto* param = Simulation::GetActive()->GetParam();
+  const auto* sparam = param->Get<SimParam>();
+  actualDiameter_ = sparam->actualDiameter_;
+  SetPerceptionRadius(sparam->perceptionRadius_);
+  SetPerceptionAngle(sparam->perceptionAngle_);
+  maxForce_ = sparam->maxForce_;
+  maxSpeed_ = sparam->maxSpeed_;
+  crusingSpeed_ = sparam->crusingSpeed;
+  minSpeed_ = sparam->minSpeed_;
+  cohesionWeight = sparam->cohesionWeight;
+  alignmentWeight = sparam->alignmentWeight;
+  seperationWeight = sparam->seperationWeight;
+  avoidDomainBoundaryWeight = sparam->avoidDomainBoundaryWeight;
+  obstacleAvoidanceWeight = sparam->obstacleAvoidanceWeight;
+
+  SetNewPosition(GetPosition());
+  SetNewVelocity(GetVelocity());
+}
+
+Double3 Boid::UpperLimit(Double3 vector, double upperLimit) {
+  double length = vector.Norm();
+  if (length > upperLimit) {
+    vector = (vector / length) * upperLimit;
   }
   return vector;
 }
 
-Double3 Boid::LowerLimit(Double3 vector, double limit) {
-  if (vector.Norm() < limit) {
-    vector = vector.Normalize() * limit;
+Double3 Boid::LowerLimit(Double3 vector, double lowerLimit) {
+  double length = vector.Norm();
+  if (length < lowerLimit) {
+    vector = (vector / length) * lowerLimit;
   }
   return vector;
 }
 
-// bool Boid::IsHeadingForCollision() { return false; }
-
-// Double3 Boid::ObstacleAvoidanceForce() {
-//   auto rayDirections = DirectionArray().GetAlignedDirections(velocity_);
-//   for (int i = 0; i < sizeof(rayDirections); i++) {
-//   }
-// }
+Double3 Boid::ClampUpperLower(Double3 vector, double upperLimit,
+                              double lowerLimit) {
+  double length = vector.Norm();
+  if (length > upperLimit) {
+    vector = (vector / length) * upperLimit;
+  }
+  if (length < lowerLimit) {
+    vector = (vector / length) * lowerLimit;
+  }
+  return vector;
+}
 
 bool Boid::CheckIfVisible(Double3 point) {
   Double3 cone_normal = headingDirection_;
   Double3 direction_normal = (point - GetPosition()).Normalize();
-  double angle = std::acos(cone_normal * direction_normal);
-
-  if (angle > perceptionAngle_) {
-    return false;
-  } else {
+  double cosAngle = cone_normal * direction_normal;
+  if (cosAngle >= cosPerceptionAngle_) {
     return true;
+  } else {
+    return false;
   }
 }
 
@@ -101,26 +126,30 @@ Double3 Boid::OpenLoopDomain(Double3 position) {
 }
 
 Double3 Boid::SteerTowards(Double3 vector) {
-  Double3 steer = vector.Normalize() * maxSpeed_ - velocity_;
+  if (vector.Norm() == 0) {
+    return Double3{0, 0, 0};
+  }
+  Double3 steer = vector.Normalize() * crusingSpeed_ - velocity_;
   return UpperLimit(steer, maxForce_);
 }
 
-void Boid::UpdatePosition() {
-  Double3 position = GetPosition();
-  position += velocity_;
-  // position = OpenLoopDomain(position);
-  SetPosition(position);
+void Boid::UpdateNewPosition() {
+  newPosition_ += newVelocity_;
+  // newPosition_ = OpenLoopDomain(newPosition);
 }
 
-void Boid::UpdateVelocity() {
+void Boid::UpdateNewVelocity() {
   acceleration_ = UpperLimit(acceleration_, maxForce_);
-  velocity_ += acceleration_;
-  velocity_ = UpperLimit(velocity_, maxSpeed_);
-  velocity_ = LowerLimit(velocity_, minSpeed_);
-  headingDirection_ = velocity_;
+  newVelocity_ += acceleration_;
+  newVelocity_ = ClampUpperLower(newVelocity_, maxSpeed_, minSpeed_);
 }
 
 void Boid::ResetAcceleration() { acceleration_ = {0, 0, 0}; }
+
+void Boid::UpdateData() {
+  SetVelocity(GetNewVelocity());
+  SetPosition(GetNewPosition());
+}
 
 void Boid::AccelerationAccumulator(Double3 acc2add) {
   acceleration_ += acc2add;
