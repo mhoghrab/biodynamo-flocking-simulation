@@ -55,8 +55,8 @@ inline int Simulate(int argc, const char** argv) {
     auto* boid = new Boid({x_coord, y_coord, z_coord});
 
     boid->SetVelocity({x_vel, y_vel, z_vel});
-    boid->Initialize();  // this sets newPosition and newVelocity, so do after
-                         // setting initial position and velocity
+    boid->InitializeMembers();  // this sets newPosition and newVelocity, so do
+                                // after setting initial position and velocity
     boid->AddBehavior(new Flocking());
 
     rm->AddAgent(boid);
