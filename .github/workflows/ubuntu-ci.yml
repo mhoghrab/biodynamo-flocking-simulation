@@ -54,6 +54,7 @@ jobs:
     - name: Build flocking_simulation and run small simulation
       run: |
         sed -i 's/"export_visualization": true/"export_visualization": false/g' bdm.json
+        sed -i 's/export = true/export = false/g' bdm.toml
         . ../biodynamo/build/bin/thisbdm.sh
         cmake -G Ninja -B build
         cmake --build build --parallel --config Release
