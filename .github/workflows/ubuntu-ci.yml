@@ -31,7 +31,17 @@ jobs:
         sudo ./cmake-3.19.3-Linux-x86_64.sh --skip-license --prefix=/usr/local
         sudo apt-get install -y libssl-dev zlib1g-dev libbz2-dev libreadline-dev \
           libsqlite3-dev xz-utils tk-dev libffi-dev liblzma-dev python-openssl
-   
+    
+    - name: Start Xvfb
+      run: |
+        set -e
+        sudo apt update
+        sudo apt-get -y install xvfb
+        XVFBARGS=":99 -ac -screen 0 2560x1440x24"
+        /usr/bin/Xvfb $XVFBARGS >> /tmp/Xvfb.out 2>&1 &
+        disown -ar
+        sleep 3
+
     - name: Install BioDynaMo
       run: |
         if [ ! -f "$HOME/.pyenv/bin/pyenv" ]; then
@@ -54,8 +64,8 @@ jobs:
     - name: Build flocking_simulation and run small simulation
       run: |
         sed -i 's/"export_visualization": true/"export_visualization": false/g' bdm.json
-        sed -i 's/export = true/export = false/g' bdm.toml
         . ../biodynamo/build/bin/thisbdm.sh
         cmake -G Ninja -B build
         cmake --build build --parallel --config Release
+        export DISPLAY=:99.0
         ./build/flocking_simulation
