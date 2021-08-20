@@ -18,11 +18,11 @@ namespace bdm {
 struct SimParam : public ParamGroup {
   BDM_PARAM_GROUP_HEADER(SimParam, 1);
 
-  double actualDiameter_ = 15, perceptionRadius_ = 150,
-         perceptionAngle_ = (3 * M_PI) / 5;
-  double maxForce_ = 3, maxSpeed_ = 15, crusingSpeed = 12, minSpeed_ = 8;
-  double cohesionWeight = 1, alignmentWeight = 2, seperationWeight = 1.5,
-         avoidDomainBoundaryWeight = 25, obstacleAvoidanceWeight = 5;
+  double actual_diameter = 15, perception_radius = 150,
+         perception_angle = (3 * M_PI) / 5;
+  double max_force = 3, max_speed = 15, crusing_speed = 12, min_speed = 8;
+  double cohesion_weight = 1, alignment_weight = 2, seperation_weight = 1.5,
+         avoid_domain_boundary_weight = 25, obstacle_avoidance_weight = 5;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -38,7 +38,7 @@ inline int Simulate(int argc, const char** argv) {
 
   // Create n_boids boids uniformly distributed in 3D space with a random
   // staring velocity
-  size_t n_boids = 2000;
+  size_t n_boids = 1000;
   double x_coord, y_coord, z_coord;
   double x_vel, y_vel, z_vel;
 
@@ -65,12 +65,12 @@ inline int Simulate(int argc, const char** argv) {
   // add PostScheduledOp to set the actual position/velocity to the calculated
   // newPosition/newVelocity
   OperationRegistry::GetInstance()->AddOperationImpl(
-      "UpdateOp", OpComputeTarget::kCpu, new UpdateOp());
+      "UpdateOp", OpComputeTarget::kCuda, new UpdateOp());
   auto* update_op = NewOperation("UpdateOp");
   scheduler->ScheduleOp(update_op, OpType::kPostSchedule);
 
   // Run simulation
-  simulation.GetScheduler()->Simulate(400);
+  simulation.GetScheduler()->Simulate(100);
 
   std::cout << "Simulation completed successfully!" << std::endl;
   return 0;

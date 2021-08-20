@@ -7,56 +7,56 @@ using namespace bdm;
 void Boid::InitializeMembers() {
   const auto* param = Simulation::GetActive()->GetParam();
   const auto* sparam = param->Get<SimParam>();
-  actualDiameter_ = sparam->actualDiameter_;
-  SetPerceptionRadius(sparam->perceptionRadius_);
-  SetPerceptionAngle(sparam->perceptionAngle_);
-  maxForce_ = sparam->maxForce_;
-  maxSpeed_ = sparam->maxSpeed_;
-  crusingSpeed_ = sparam->crusingSpeed;
-  minSpeed_ = sparam->minSpeed_;
-  cohesionWeight = sparam->cohesionWeight;
-  alignmentWeight = sparam->alignmentWeight;
-  seperationWeight = sparam->seperationWeight;
-  avoidDomainBoundaryWeight = sparam->avoidDomainBoundaryWeight;
-  obstacleAvoidanceWeight = sparam->obstacleAvoidanceWeight;
+  actual_diameter_ = sparam->actual_diameter;
+  SetPerceptionRadius(sparam->perception_radius);
+  SetPerceptionAngle(sparam->perception_angle);
+  max_force_ = sparam->max_force;
+  max_speed_ = sparam->max_speed;
+  crusing_speed_ = sparam->crusing_speed;
+  min_speed_ = sparam->min_speed;
+  cohesion_weight_ = sparam->cohesion_weight;
+  alignment_weight_ = sparam->alignment_weight;
+  seperation_weight_ = sparam->seperation_weight;
+  avoid_domain_boundary_weight_ = sparam->avoid_domain_boundary_weight;
+  obstacle_avoidance_weight_ = sparam->obstacle_avoidance_weight;
 
   SetNewPosition(GetPosition());
   SetNewVelocity(GetVelocity());
 }
 
-Double3 Boid::UpperLimit(Double3 vector, double upperLimit) {
+Double3 Boid::UpperLimit(Double3 vector, double upper_limit) {
   double length = vector.Norm();
-  if (length > upperLimit) {
-    vector = (vector / length) * upperLimit;
+  if (length > upper_limit) {
+    vector = (vector / length) * upper_limit;
   }
   return vector;
 }
 
-Double3 Boid::LowerLimit(Double3 vector, double lowerLimit) {
+Double3 Boid::LowerLimit(Double3 vector, double lower_limit) {
   double length = vector.Norm();
-  if (length < lowerLimit) {
-    vector = (vector / length) * lowerLimit;
+  if (length < lower_limit) {
+    vector = (vector / length) * lower_limit;
   }
   return vector;
 }
 
-Double3 Boid::ClampUpperLower(Double3 vector, double upperLimit,
-                              double lowerLimit) {
+Double3 Boid::ClampUpperLower(Double3 vector, double upper_limit,
+                              double lower_limit) {
   double length = vector.Norm();
-  if (length > upperLimit) {
-    vector = (vector / length) * upperLimit;
+  if (length > upper_limit) {
+    vector = (vector / length) * upper_limit;
   }
-  if (length < lowerLimit) {
-    vector = (vector / length) * lowerLimit;
+  if (length < lower_limit) {
+    vector = (vector / length) * lower_limit;
   }
   return vector;
 }
 
 bool Boid::CheckIfVisible(Double3 point) {
-  Double3 cone_normal = headingDirection_;
+  Double3 cone_normal = heading_direction_;
   Double3 direction_normal = (point - GetPosition()).Normalize();
   double cosAngle = cone_normal * direction_normal;
-  if (cosAngle >= cosPerceptionAngle_) {
+  if (cosAngle >= cos_perception_angle_) {
     return true;
   } else {
     return false;
@@ -68,34 +68,34 @@ Double3 Boid::AvoidDomainBoundary() {
   double min_bound = param->min_bound;
   double max_bound = param->max_bound;
 
-  Double3 avoidDomainBoundaryForce = {0, 0, 0};
+  Double3 avoid_domain_boundary_force = {0, 0, 0};
   Double3 position = GetPosition();
-  double getawayVelocity = 0.7 * minSpeed_;
-  double avoidanceDistance = 0.3 * perceptionRadius_;
+  double get_away_velocity = 0.7 * min_speed_;
+  double avoidance_distance = 0.3 * perception_radius_;
 
   for (int i = 0; i <= 2; i++) {
-    if (velocity_[i] <= getawayVelocity and
-        abs(position[i] - min_bound) < avoidanceDistance) {
-      Double3 Force = {0, 0, 0};
-      Force[i] = 1;
+    if (velocity_[i] <= get_away_velocity and
+        abs(position[i] - min_bound) < avoidance_distance) {
+      Double3 force = {0, 0, 0};
+      force[i] = 1;
       double dist = abs(position[i] - min_bound);
-      Force = Force * (3 * actualDiameter_) / (dist * dist + 0.01);
-      avoidDomainBoundaryForce += SteerTowards(Force);
+      force = force * (3 * actual_diameter_) / (dist * dist + 0.01);
+      avoid_domain_boundary_force += SteerTowards(force);
     }
   }
 
   for (int i = 0; i <= 2; i++) {
-    if (velocity_[i] >= -1 * getawayVelocity and
-        abs(position[i] - max_bound) < avoidanceDistance) {
-      Double3 Force = {0, 0, 0};
-      Force[i] = -1;
+    if (velocity_[i] >= -1 * get_away_velocity and
+        abs(position[i] - max_bound) < avoidance_distance) {
+      Double3 force = {0, 0, 0};
+      force[i] = -1;
       double dist = abs(position[i] - max_bound);
-      Force = Force * (3 * actualDiameter_) / (dist * dist + 0.01);
-      avoidDomainBoundaryForce += SteerTowards(Force);
+      force = force * (3 * actual_diameter_) / (dist * dist + 0.01);
+      avoid_domain_boundary_force += SteerTowards(force);
     }
   }
 
-  return UpperLimit(avoidDomainBoundaryForce, maxForce_);
+  return UpperLimit(avoid_domain_boundary_force, max_force_);
 }
 
 Double3 Boid::OpenLoopDomain(Double3 position) {
@@ -129,19 +129,19 @@ Double3 Boid::SteerTowards(Double3 vector) {
   if (vector.Norm() == 0) {
     return Double3{0, 0, 0};
   }
-  Double3 steer = vector.Normalize() * crusingSpeed_ - velocity_;
-  return UpperLimit(steer, maxForce_);
+  Double3 steer = vector.Normalize() * crusing_speed_ - velocity_;
+  return UpperLimit(steer, max_force_);
 }
 
 void Boid::UpdateNewPosition() {
-  newPosition_ += newVelocity_;
-  // newPosition_ = OpenLoopDomain(newPosition);
+  new_position_ += new_velocity_;
+  // new_position_ = OpenLoopDomain(newPosition);
 }
 
 void Boid::UpdateNewVelocity() {
-  acceleration_ = UpperLimit(acceleration_, maxForce_);
-  newVelocity_ += acceleration_;
-  newVelocity_ = ClampUpperLower(newVelocity_, maxSpeed_, minSpeed_);
+  acceleration_ = UpperLimit(acceleration_, max_force_);
+  new_velocity_ += acceleration_;
+  new_velocity_ = ClampUpperLower(new_velocity_, max_speed_, min_speed_);
 }
 
 void Boid::ResetAcceleration() { acceleration_ = {0, 0, 0}; }
@@ -151,6 +151,6 @@ void Boid::UpdateData() {
   SetPosition(GetNewPosition());
 }
 
-void Boid::AccelerationAccumulator(Double3 acc2add) {
-  acceleration_ += acc2add;
+void Boid::AccelerationAccumulator(Double3 acceleration_to_add) {
+  acceleration_ += acceleration_to_add;
 }
