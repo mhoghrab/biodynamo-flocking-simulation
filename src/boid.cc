@@ -4,7 +4,7 @@
 
 using namespace bdm;
 
-void Boid::Initialize() {
+void Boid::InitializeMembers() {
   const auto* param = Simulation::GetActive()->GetParam();
   const auto* sparam = param->Get<SimParam>();
   actualDiameter_ = sparam->actualDiameter_;
