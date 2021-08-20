@@ -23,7 +23,7 @@ class Boid : public Cell {
   Double3 GetVelocity() const { return velocity_; }
   void SetVelocity(Double3 velocity) {
     velocity_ = velocity;
-    headingDirection_ = velocity_.Normalize();
+    heading_direction_ = velocity_.Normalize();
     // why does it result in 2 completly different behaviors when using
     // velocity.Normalize() or velocity_.Normalize() ???????????
   }
@@ -31,37 +31,37 @@ class Boid : public Cell {
   Double3 GetAcceleration() const { return acceleration_; }
   void SetAcceleration(Double3 acceleration) { acceleration_ = acceleration; }
 
-  Double3 GetNewPosition() const { return newPosition_; }
-  void SetNewPosition(Double3 position) { newPosition_ = position; }
+  Double3 GetNewPosition() const { return new_position_; }
+  void SetNewPosition(Double3 position) { new_position_ = position; }
 
-  Double3 GetNewVelocity() const { return newVelocity_; }
-  void SetNewVelocity(Double3 velocity) { newVelocity_ = velocity; }
+  Double3 GetNewVelocity() const { return new_velocity_; }
+  void SetNewVelocity(Double3 velocity) { new_velocity_ = velocity; }
 
-  double GetActualDiameter() const { return actualDiameter_; }
-  void SetActualDiameter(double actualDiameter) {
-    actualDiameter_ = actualDiameter;
+  double GetActualDiameter() const { return actual_diameter_; }
+  void SetActualDiameter(double actual_diameter) {
+    actual_diameter_ = actual_diameter;
   }
 
-  double GetPerceptionRadius() const { return perceptionRadius_; }
-  void SetPerceptionRadius(double perceptionRadius) {
-    perceptionRadius_ = perceptionRadius;
-    this->SetDiameter(perceptionRadius_ * 2);
+  double GetPerceptionRadius() const { return perception_radius_; }
+  void SetPerceptionRadius(double perception_radius) {
+    perception_radius_ = perception_radius;
+    SetDiameter(perception_radius_ * 2);
   }
 
   void SetPerceptionAngle(double angle) {
-    perceptionAngle_ = angle;
-    cosPerceptionAngle_ = std::cos(angle);
+    perception_angle_ = angle;
+    cos_perception_angle_ = std::cos(angle);
   }
 
   ///////////////////////////////////////////////////////////////////////////////
   // Limit/Clamp the length of a vector to a upper or/and lower limit
-  Double3 UpperLimit(Double3 vector, double upperLimit);
-  Double3 LowerLimit(Double3 vector, double lowerLimit);
-  Double3 ClampUpperLower(Double3 vector, double upperLimit, double lowerLimit);
+  Double3 UpperLimit(Double3 vector, double upper_limit);
+  Double3 LowerLimit(Double3 vector, double lower_limit);
+  Double3 ClampUpperLower(Double3 vector, double upper_limit, double lower_limit);
 
   ///////////////////////////////////////////////////////////////////////////////
   // Returns bool wether given point is inside viewing cone defined by
-  // headingDirection_ and perceptionAngle_
+  // heading_direction_ and perception_angle_
   bool CheckIfVisible(Double3 point);
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -75,17 +75,17 @@ class Boid : public Cell {
 
   ///////////////////////////////////////////////////////////////////////////////
   // Returns a Steering-Force in order to steer velocity towards
-  // (vector.Normalize() * crusingSpeed_)
-  // Force is limited by maxForce_
+  // (vector.Normalize() * crusing_speed_)
+  // Force is limited by max_force_
   Double3 SteerTowards(Double3 vector);
 
   ///////////////////////////////////////////////////////////////////////////////
-  // Update newPosition_ by adding newVelocity_
+  // Update new_position_ by adding new_velocity_
   void UpdateNewPosition();
 
   ///////////////////////////////////////////////////////////////////////////////
-  // Update newVelocity_ by adding acceleration_ and clamping it by maxSpeed_
-  // and minSpeed_
+  // Update new_velocity_ by adding acceleration_ and clamping it by max_speed_
+  // and min_speed_
   void UpdateNewVelocity();
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -94,20 +94,20 @@ class Boid : public Cell {
 
   ///////////////////////////////////////////////////////////////////////////////
   // Right now simply adds acc2add to the stored acceleration_
-  void AccelerationAccumulator(Double3 acc2add);
+  void AccelerationAccumulator(Double3 acceleration_to_add);
 
   ///////////////////////////////////////////////////////////////////////////////
-  // Sets the actual position/velocity to newPosition_/newVelocity_
+  // Sets the actual position / velocity to new_position_ / new_velocity_
   void UpdateData();
 
   ///////////////////////////////////////////////////////////////////////////////
-  Double3 newPosition_, newVelocity_;
-  Double3 acceleration_, velocity_, headingDirection_;
-  double actualDiameter_ = 15, perceptionRadius_ = 150, perceptionAngle_ = M_PI,
-         cosPerceptionAngle_;
-  double maxForce_ = 3, maxSpeed_ = 20, crusingSpeed_ = 15, minSpeed_ = 10;
-  double cohesionWeight = 1, alignmentWeight = 2, seperationWeight = 1.5,
-         avoidDomainBoundaryWeight = 25, obstacleAvoidanceWeight = 5;
+  Double3 new_position_, new_velocity_;
+  Double3 acceleration_, velocity_, heading_direction_;
+  double actual_diameter_ = 15, perception_radius_ = 150, perception_angle_ = M_PI,
+         cos_perception_angle_;
+  double max_force_ = 3, max_speed_ = 20, crusing_speed_ = 15, min_speed_ = 10;
+  double cohesion_weight_ = 1, alignment_weight_ = 2, seperation_weight_ = 1.5,
+         avoid_domain_boundary_weight_ = 25, obstacle_avoidance_weight_ = 5;
 };
 
 }  // namespace bdm

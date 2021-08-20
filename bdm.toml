@@ -4,15 +4,16 @@ interval = 1
 
     [[visualize_agent]]
     name = "Boid"
-    additional_data_members = [ "actualDiameter_"]
+    additional_data_members = [ "actual_diameter_"]
 
 [simulation]
 bound_space = true
 min_bound = 0
-max_bound = 2000
+max_bound = 1000
+remove_output_dir_contents = true
 
 [experimental]
-compute_target = "opencl"
+compute_target = "cuda"
 
 [development]
 statistics = true
