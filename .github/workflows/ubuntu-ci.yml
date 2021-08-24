@@ -54,13 +54,13 @@ jobs:
         cd biodynamo
         cmake -G Ninja \
           -Dparaview=on \
+          -Dbenchmark=off \
           -DCMAKE_BUILD_TYPE=Release \
           -B build
         cmake --build build --parallel --config Release
 
     - name: Build flocking_simulation and run small simulation
       run: |
-        sed -i 's/"export_visualization": true/"export_visualization": false/g' bdm.json
         . ../biodynamo/build/bin/thisbdm.sh
         cmake -G Ninja -B build
         cmake --build build --parallel --config Release

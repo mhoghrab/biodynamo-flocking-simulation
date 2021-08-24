@@ -46,6 +46,7 @@ jobs:
         cd biodynamo
         cmake -G Ninja \
           -Dparaview=on \
+          -Dbenchmark=off \
           -DCMAKE_BUILD_TYPE=Release \
           -B build
         cmake --build build --parallel --config Release
