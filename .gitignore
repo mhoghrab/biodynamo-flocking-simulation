@@ -1,4 +1,5 @@
 build/
+output/
 
 !demo/makefile_project/Makefile
 demo/makefile_project/bdm_generated_code.cc
@@ -84,3 +85,4 @@ __pycache__/
 *.root
 *.vtu
 *.pvtu
+`

@@ -2,23 +2,26 @@
 #define DIRECTION_ARRAY_H_
 
 #include <math.h>
+#include <vector>
 #include "core/container/math_array.h"
 
 namespace bdm {
 
 class DirectionArray {
+ private:
   // https://github.com/SebLague/Boids/blob/master/Assets/Scripts/BoidHelper.cs
-  const static int n = 200;
+  const int n_;
+  std::vector<Double3> directions_;
 
  public:
-  std::array<Double3, n> directions;
-
-  DirectionArray() {
+  DirectionArray() : n_(200) {
     double goldenRatio = (1 + sqrt(5)) / 2;
     double angleIncrement = M_PI * 2 * goldenRatio;
 
-    for (int i = 0; i < n; i++) {
-      double t = (double)i / n;
+    directions_.resize(n_);
+
+    for (int i = 0; i < n_; i++) {
+      double t = (double)i / (double)n_;
       double inclination = acos(1 - 2 * t);
       double azimuth = angleIncrement * i;
 
@@ -26,23 +29,23 @@ class DirectionArray {
       double y = sin(inclination) * sin(azimuth);
       double z = cos(inclination);
       Double3 Ray = {x, y, z};
-      directions[i] = Ray;
+      directions_[i] = Ray;
     }
   }
 
-  std::array<Double3, n> GetAlignedDirections(Double3 velocityDirection) {
+  std::vector<Double3> GetAlignedDirections(Double3& velocityDirection) {
     // align directions[0] with velocityDirection and rotate all other Rays with
     // same parameters
 
     // crossprodukt directions[0] x velocityDirection
-    Double3 axis = {directions[0][1] * velocityDirection[2] -
-                        directions[0][2] * velocityDirection[1],
-                    directions[0][2] * velocityDirection[0] -
-                        directions[0][0] * velocityDirection[2],
-                    directions[0][0] * velocityDirection[1] -
-                        directions[0][1] * velocityDirection[0]};
+    Double3 axis = {directions_[0][1] * velocityDirection[2] -
+                        directions_[0][2] * velocityDirection[1],
+                    directions_[0][2] * velocityDirection[0] -
+                        directions_[0][0] * velocityDirection[2],
+                    directions_[0][0] * velocityDirection[1] -
+                        directions_[0][1] * velocityDirection[0]};
 
-    const double cosA = directions[0] * velocityDirection;
+    const double cosA = directions_[0] * velocityDirection;
     const double k = 1 / (1 + cosA);
 
     // Alignment Matrix with coli als columns
@@ -56,11 +59,14 @@ class DirectionArray {
                     (axis[1] * axis[2] * k) + axis[0],
                     (axis[2] * axis[2] * k) + cosA};
 
-    // Alignment Matrix * directions[i]
-    std::array<Double3, n> directions_aligned;
-    for (int i = 0; i < n; i++) {
-      directions_aligned[i] = col1 * directions[0][0] +
-                              col2 * directions[0][1] + col3 * directions[0][2];
+    // Alignment Matrix * directions_[i]
+    std::vector<Double3> directions_aligned;
+    directions_aligned.resize(n_);
+
+    for (int i = 0; i < n_; i++) {
+      directions_aligned[i] = col1 * directions_[0][0] +
+                              col2 * directions_[0][1] +
+                              col3 * directions_[0][2];
     }
 
     return directions_aligned;
