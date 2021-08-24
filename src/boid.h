@@ -2,7 +2,9 @@
 #define BOID_H_
 
 #include "core/agent/cell.h"
+#include "core/behavior/behavior.h"
 #include "core/container/math_array.h"
+#include "core/functor.h"
 
 namespace bdm {
 
@@ -57,7 +59,8 @@ class Boid : public Cell {
   // Limit/Clamp the length of a vector to a upper or/and lower limit
   Double3 UpperLimit(Double3 vector, double upper_limit);
   Double3 LowerLimit(Double3 vector, double lower_limit);
-  Double3 ClampUpperLower(Double3 vector, double upper_limit, double lower_limit);
+  Double3 ClampUpperLower(Double3 vector, double upper_limit,
+                          double lower_limit);
 
   ///////////////////////////////////////////////////////////////////////////////
   // Returns bool wether given point is inside viewing cone defined by
@@ -103,11 +106,51 @@ class Boid : public Cell {
   ///////////////////////////////////////////////////////////////////////////////
   Double3 new_position_, new_velocity_;
   Double3 acceleration_, velocity_, heading_direction_;
-  double actual_diameter_ = 15, perception_radius_ = 150, perception_angle_ = M_PI,
-         cos_perception_angle_;
+  double actual_diameter_ = 15, perception_radius_ = 150,
+         perception_angle_ = M_PI, cos_perception_angle_;
   double max_force_ = 3, max_speed_ = 20, crusing_speed_ = 15, min_speed_ = 10;
   double cohesion_weight_ = 1, alignment_weight_ = 2, seperation_weight_ = 1.5,
          avoid_domain_boundary_weight_ = 25, obstacle_avoidance_weight_ = 5;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// Functor class needed to calculate neighbor data in ForEachNeighbor call
+///////////////////////////////////////////////////////////////////////////////
+class CalculateNeighborData : public Functor<void, Agent*, double> {
+ public:
+  CalculateNeighborData(Boid* boid) : boid_(boid) {
+    boid_pos_ = boid_->GetPosition();
+    sum_pos_ = {0, 0, 0};
+    sum_vel_ = {0, 0, 0};
+    sum_diff_pos_ = {0, 0, 0};
+    n = 0;
+  }
+  virtual ~CalculateNeighborData() {}
+
+  void operator()(Agent* neighbor, double squared_distance) override;
+
+  Double3 GetAvgPosDirection();
+
+  Double3 GetDiffPos();
+
+  Double3 GetAvgVel();
+
+ private:
+  Boid* boid_;
+  Double3 boid_pos_;
+  Double3 sum_pos_;
+  Double3 sum_vel_;
+  Double3 sum_diff_pos_;
+  int n;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// Flocking Behaviour
+///////////////////////////////////////////////////////////////////////////////
+struct Flocking : public Behavior {
+  BDM_BEHAVIOR_HEADER(Flocking, Behavior, 1);
+
+  void Run(Agent* agent) override;
 };
 
 }  // namespace bdm

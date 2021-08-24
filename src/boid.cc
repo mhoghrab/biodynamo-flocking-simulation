@@ -1,6 +1,6 @@
 #include "boid.h"
 #include "core/container/math_array.h"
-#include "flocking_simulation.h"
+#include "sim_param.h"
 
 using namespace bdm;
 
@@ -153,4 +153,81 @@ void Boid::UpdateData() {
 
 void Boid::AccelerationAccumulator(Double3 acceleration_to_add) {
   acceleration_ += acceleration_to_add;
+}
+
+void CalculateNeighborData::operator()(Agent* neighbor,
+                                       double squared_distance) {
+  auto* other = bdm_static_cast<const Boid*>(neighbor);
+  Double3 other_pos = other->GetPosition();
+
+  // check if neighbor is in viewing cone
+  if (boid_->CheckIfVisible(other_pos)) {
+    Double3 other_vel = other->GetVelocity();
+    Double3 diff_pos = boid_pos_ - other_pos;
+
+    double dist = diff_pos.Norm();
+
+    sum_pos_ += other_pos;
+    sum_vel_ += other_vel;
+
+    if (dist < 0.5 * boid_->GetPerceptionRadius()) {
+      diff_pos /= pow(dist, 2);
+      sum_diff_pos_ += diff_pos;
+    }
+    n++;
+  }
+}
+
+Double3 CalculateNeighborData::GetAvgPosDirection() {
+  if (n != 0) {
+    sum_pos_ = sum_pos_ / static_cast<double>(n);
+    sum_pos_ -= boid_pos_;
+  }
+  return sum_pos_;
+}
+
+Double3 CalculateNeighborData::GetDiffPos() {
+  if (n != 0) {
+    sum_diff_pos_ = sum_diff_pos_ / static_cast<double>(n);
+  }
+  return sum_diff_pos_;
+}
+
+Double3 CalculateNeighborData::GetAvgVel() {
+  if (n != 0) {
+    sum_vel_ = sum_vel_ / static_cast<double>(n);
+  }
+  return sum_vel_;
+}
+
+void Flocking::Run(Agent* agent) {
+  auto* boid = dynamic_cast<Boid*>(agent);
+  auto* ctxt = Simulation::GetActive()->GetExecutionContext();
+
+  double perception_radius = boid->GetPerceptionRadius();
+  double perception_radius_squared = perception_radius * perception_radius;
+
+  ///////////////////////////////////////////////////////////////////////////////
+  // Calculate seperation_force, alignment_force, cohesion_force,
+  // avoid_domain_boundary_force
+  CalculateNeighborData NeighborData(boid);
+  ctxt->ForEachNeighbor(NeighborData, *boid, perception_radius_squared);
+
+  Double3 seperation_force = boid->SteerTowards(NeighborData.GetDiffPos());
+  Double3 alignment_force = boid->SteerTowards(NeighborData.GetAvgVel());
+  Double3 cohesion_force =
+      boid->SteerTowards(NeighborData.GetAvgPosDirection());
+  Double3 avoid_domain_boundary_force = boid->AvoidDomainBoundary();
+
+  ///////////////////////////////////////////////////////////////////////////////
+  // Update acceleration_, new_velocity_, new_position_ of boid
+  boid->ResetAcceleration();
+  boid->AccelerationAccumulator(seperation_force * boid->seperation_weight_);
+  boid->AccelerationAccumulator(alignment_force * boid->alignment_weight_);
+  boid->AccelerationAccumulator(cohesion_force * boid->cohesion_weight_);
+  boid->AccelerationAccumulator(avoid_domain_boundary_force *
+                                boid->avoid_domain_boundary_weight_);
+
+  boid->UpdateNewVelocity();
+  boid->UpdateNewPosition();
 }

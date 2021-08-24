@@ -1,39 +1,36 @@
-#ifndef FLOCKING_SIMULATION_H_
-#define FLOCKING_SIMULATION_H_
+// -----------------------------------------------------------------------------
+//
+// Copyright (C) 2021 CERN & Newcastle University for the benefit of the
+// BioDynaMo collaboration. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+//
+// See the LICENSE file distributed with this work for details.
+// See the NOTICE file distributed with this work for additional information
+// regarding copyright ownership.
+//
+// -----------------------------------------------------------------------------
+#ifndef FLOCKING_H_
+#define FLOCKING_H_
 
-#include "UpdateOp.h"
-#include "behavior.h"
 #include "biodynamo.h"
 #include "boid.h"
-#include "core/container/math_array.h"
-#include "core/environment/environment.h"
-#include "core/operation/operation.h"
-#include "core/operation/operation_registry.h"
+#include "sim_param.h"
+#include "update_operation.h"
 
 namespace bdm {
 
-///////////////////////////////////////////////////////////////////////////////
-// Parameters specific for this simulation
-///////////////////////////////////////////////////////////////////////////////
-struct SimParam : public ParamGroup {
-  BDM_PARAM_GROUP_HEADER(SimParam, 1);
+const ParamGroupUid SimParam::kUid = ParamGroupUidGenerator::Get()->NewUid();
 
-  double actual_diameter = 15, perception_radius = 150,
-         perception_angle = (3 * M_PI) / 5;
-  double max_force = 3, max_speed = 15, crusing_speed = 12, min_speed = 8;
-  double cohesion_weight = 1, alignment_weight = 2, seperation_weight = 1.5,
-         avoid_domain_boundary_weight = 25, obstacle_avoidance_weight = 5;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// Simulation
-///////////////////////////////////////////////////////////////////////////////
-inline int Simulate(int argc, const char** argv) {
+int Simulate(int argc, const char** argv) {
   Param::RegisterParamGroup(new SimParam());
-  Simulation simulation(argc, argv);
+  auto set_param = [&](Param* param) { param->statistics = true; };
+  Simulation simulation(argc, argv, set_param);
   auto* rm = simulation.GetResourceManager();
   auto* random = simulation.GetRandom();
   auto* param = simulation.GetParam();
+  auto* sparam = param->Get<SimParam>();
   auto* scheduler = simulation.GetScheduler();
 
   // Create n_boids boids uniformly distributed in 3D space with a random
@@ -65,17 +62,17 @@ inline int Simulate(int argc, const char** argv) {
   // add PostScheduledOp to set the actual position/velocity to the calculated
   // newPosition/newVelocity
   OperationRegistry::GetInstance()->AddOperationImpl(
-      "UpdateOp", OpComputeTarget::kCuda, new UpdateOp());
+      "UpdateOp", OpComputeTarget::kCpu, new UpdateOp());
   auto* update_op = NewOperation("UpdateOp");
   scheduler->ScheduleOp(update_op, OpType::kPostSchedule);
 
-  // Run simulation
-  simulation.GetScheduler()->Simulate(100);
+  // Run simulation for one timestep
+  scheduler->Simulate(sparam->simulation_steps);
 
   std::cout << "Simulation completed successfully!" << std::endl;
   return 0;
-};
+}
 
 }  // namespace bdm
 
-#endif  // FLOCKING_SIMULATION_H_
+#endif  // FLOCKING_H_
