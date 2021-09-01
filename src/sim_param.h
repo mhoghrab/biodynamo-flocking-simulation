@@ -5,12 +5,13 @@
 
 namespace bdm {
 
-///////////////////////////////////////////////////////////////////////////////
+// -----------------------------------------------------------------------------
 // Parameters specific for this simulation
-///////////////////////////////////////////////////////////////////////////////
+// -----------------------------------------------------------------------------
 struct SimParam : public ParamGroup {
   BDM_PARAM_GROUP_HEADER(SimParam, 1);
 
+  size_t n_boids = 1000;
   double actual_diameter = 15;
   double perception_radius = 150;
   double perception_angle = (3 * M_PI) / 5;

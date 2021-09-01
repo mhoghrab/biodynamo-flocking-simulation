@@ -14,10 +14,12 @@
 #ifndef FLOCKING_H_
 #define FLOCKING_H_
 
+#include "TGeoManager.h"
 #include "biodynamo.h"
 #include "boid.h"
 #include "sim_param.h"
 #include "update_operation.h"
+#include "world_geometry.h"
 
 namespace bdm {
 
@@ -33,9 +35,13 @@ int Simulate(int argc, const char** argv) {
   auto* sparam = param->Get<SimParam>();
   auto* scheduler = simulation.GetScheduler();
 
+  // Initializing the wold geometry / obstacles
+  auto* worldgeo = new WorldGeometry();
+  worldgeo->CreateCentreBox();
+
   // Create n_boids boids uniformly distributed in 3D space with a random
   // staring velocity
-  size_t n_boids = 1000;
+  size_t n_boids = sparam->n_boids;
   double x_coord, y_coord, z_coord;
   double x_vel, y_vel, z_vel;
 
@@ -59,14 +65,14 @@ int Simulate(int argc, const char** argv) {
     rm->AddAgent(boid);
   }
 
-  // add PostScheduledOp to set the actual position/velocity to the calculated
-  // newPosition/newVelocity
+  // add PostScheduledOp to set the actual position / velocity to the calculated
+  // newPosition / newVelocity
   OperationRegistry::GetInstance()->AddOperationImpl(
       "UpdateOp", OpComputeTarget::kCpu, new UpdateOp());
   auto* update_op = NewOperation("UpdateOp");
   scheduler->ScheduleOp(update_op, OpType::kPostSchedule);
 
-  // Run simulation for one timestep
+  // Run simulation
   scheduler->Simulate(sparam->simulation_steps);
 
   std::cout << "Simulation completed successfully!" << std::endl;

@@ -1,5 +1,4 @@
 #include "boid.h"
-#include "core/container/math_array.h"
 #include "sim_param.h"
 
 using namespace bdm;
@@ -7,6 +6,7 @@ using namespace bdm;
 void Boid::InitializeMembers() {
   const auto* param = Simulation::GetActive()->GetParam();
   const auto* sparam = param->Get<SimParam>();
+
   actual_diameter_ = sparam->actual_diameter;
   SetPerceptionRadius(sparam->perception_radius);
   SetPerceptionAngle(sparam->perception_angle);
@@ -22,6 +22,11 @@ void Boid::InitializeMembers() {
 
   SetNewPosition(GetPosition());
   SetNewVelocity(GetVelocity());
+
+  // Initialize Navigator
+  gGeoManager->InitTrack(new_position_[0], new_position_[1], new_position_[2],
+                         heading_direction_[0], heading_direction_[1],
+                         heading_direction_[2]);
 }
 
 Double3 Boid::UpperLimit(Double3 vector, double upper_limit) {
@@ -155,6 +160,24 @@ void Boid::AccelerationAccumulator(Double3 acceleration_to_add) {
   acceleration_ += acceleration_to_add;
 }
 
+Double3 Boid::ObstacleAvoidance() {
+  Double3 force;
+
+  // Update navigator
+  gGeoManager->SetCurrentPoint(new_position_[0], new_position_[1],
+                               new_position_[2]);
+  gGeoManager->SetCurrentDirection(heading_direction_[0], heading_direction_[1],
+                                   heading_direction_[2]);
+  gGeoManager->FindNextBoundary(50);
+  if (gGeoManager->GetSafeDistance() < 50) {
+    Double_t* normal_t = gGeoManager->FindNormal();
+    force = {-normal_t[0], -normal_t[1], -normal_t[2]};
+  } else {
+    force = {0, 0, 0};
+  }
+  return force;
+}
+
 void CalculateNeighborData::operator()(Agent* neighbor,
                                        double squared_distance) {
   auto* other = bdm_static_cast<const Boid*>(neighbor);
@@ -207,7 +230,6 @@ void Flocking::Run(Agent* agent) {
   double perception_radius = boid->GetPerceptionRadius();
   double perception_radius_squared = perception_radius * perception_radius;
 
-  ///////////////////////////////////////////////////////////////////////////////
   // Calculate seperation_force, alignment_force, cohesion_force,
   // avoid_domain_boundary_force
   CalculateNeighborData NeighborData(boid);
@@ -218,8 +240,8 @@ void Flocking::Run(Agent* agent) {
   Double3 cohesion_force =
       boid->SteerTowards(NeighborData.GetAvgPosDirection());
   Double3 avoid_domain_boundary_force = boid->AvoidDomainBoundary();
+  Double3 avoid_obstacle_force = boid->ObstacleAvoidance();
 
-  ///////////////////////////////////////////////////////////////////////////////
   // Update acceleration_, new_velocity_, new_position_ of boid
   boid->ResetAcceleration();
   boid->AccelerationAccumulator(seperation_force * boid->seperation_weight_);
@@ -227,6 +249,8 @@ void Flocking::Run(Agent* agent) {
   boid->AccelerationAccumulator(cohesion_force * boid->cohesion_weight_);
   boid->AccelerationAccumulator(avoid_domain_boundary_force *
                                 boid->avoid_domain_boundary_weight_);
+  boid->AccelerationAccumulator(avoid_obstacle_force *
+                                boid->obstacle_avoidance_weight_);
 
   boid->UpdateNewVelocity();
   boid->UpdateNewPosition();

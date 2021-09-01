@@ -1,16 +1,3 @@
-// directions array static dings, dass das nur einmal berechnet werden muss und immer auf das verwiesen wird#
+fix velocity = 0 crash
 
-L2F functor nicht in der aktuellen version?
-
-CalculateNeighborData auslagern
-
-Normalize() function  falls norm 0
-
-json parameter
-
-OperationRegistry::GetInstance()->AddOperationImpl(
-      "UpdateOp", OpComputeTarget::kCpu, new UpdateOp());
-
-norm squared function
-
-openloopdomain ktorus
+fix "Error in <MathArray::Normalize>: You tried to normalize a zero vector. This cannot be done. Exiting." crashes - probably when distance = 0

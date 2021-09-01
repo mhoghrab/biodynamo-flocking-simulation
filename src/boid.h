@@ -1,6 +1,7 @@
 #ifndef BOID_H_
 #define BOID_H_
 
+#include "TGeoManager.h"
 #include "core/agent/cell.h"
 #include "core/behavior/behavior.h"
 #include "core/container/math_array.h"
@@ -16,16 +17,18 @@ class Boid : public Cell {
   explicit Boid(const Double3& position) : Base(position) {}
   virtual ~Boid() {}
 
-  ///////////////////////////////////////////////////////////////////////////////
   // Initializes Boid parameters with given SimParam
   void InitializeMembers();
 
-  ///////////////////////////////////////////////////////////////////////////////
   // Various Getter and Setter
   Double3 GetVelocity() const { return velocity_; }
   void SetVelocity(Double3 velocity) {
     velocity_ = velocity;
-    heading_direction_ = velocity_.Normalize();
+    //// quick fix
+    if (velocity_.Norm() == 0)
+      heading_direction_ = {0, 0, 0};
+    else
+      heading_direction_ = velocity_.Normalize();
     // why does it result in 2 completly different behaviors when using
     // velocity.Normalize() or velocity_.Normalize() ???????????
   }
@@ -55,55 +58,49 @@ class Boid : public Cell {
     cos_perception_angle_ = std::cos(angle);
   }
 
-  ///////////////////////////////////////////////////////////////////////////////
   // Limit/Clamp the length of a vector to a upper or/and lower limit
   Double3 UpperLimit(Double3 vector, double upper_limit);
   Double3 LowerLimit(Double3 vector, double lower_limit);
   Double3 ClampUpperLower(Double3 vector, double upper_limit,
                           double lower_limit);
 
-  ///////////////////////////////////////////////////////////////////////////////
   // Returns bool wether given point is inside viewing cone defined by
   // heading_direction_ and perception_angle_
   bool CheckIfVisible(Double3 point);
 
-  ///////////////////////////////////////////////////////////////////////////////
   // Returns a Steering-Force to avoid colliding into domain boundaries
   Double3 AvoidDomainBoundary();
 
-  ///////////////////////////////////////////////////////////////////////////////
+  // Returns a Steering-Force to avoid colliding into world geometry obstacles
+  // by searching for a clear path ........ ToDo
+  Double3 ObstacleAvoidance();
+
   // Returns the position vector, but if a coordinate exceeds the boundarys it
   // will get set to the opposite site of the somain
   Double3 OpenLoopDomain(Double3 position);
 
-  ///////////////////////////////////////////////////////////////////////////////
   // Returns a Steering-Force in order to steer velocity towards
   // (vector.Normalize() * crusing_speed_)
   // Force is limited by max_force_
   Double3 SteerTowards(Double3 vector);
 
-  ///////////////////////////////////////////////////////////////////////////////
   // Update new_position_ by adding new_velocity_
   void UpdateNewPosition();
 
-  ///////////////////////////////////////////////////////////////////////////////
   // Update new_velocity_ by adding acceleration_ and clamping it by max_speed_
   // and min_speed_
   void UpdateNewVelocity();
 
-  ///////////////////////////////////////////////////////////////////////////////
   // Sets acceleration_ to {0,0,0}
   void ResetAcceleration();
 
-  ///////////////////////////////////////////////////////////////////////////////
   // Right now simply adds acc2add to the stored acceleration_
   void AccelerationAccumulator(Double3 acceleration_to_add);
 
-  ///////////////////////////////////////////////////////////////////////////////
   // Sets the actual position / velocity to new_position_ / new_velocity_
   void UpdateData();
 
-  ///////////////////////////////////////////////////////////////////////////////
+  // -----------------------------------------------------------------------------
   Double3 new_position_, new_velocity_;
   Double3 acceleration_, velocity_, heading_direction_;
   double actual_diameter_ = 15, perception_radius_ = 150,
@@ -111,11 +108,12 @@ class Boid : public Cell {
   double max_force_ = 3, max_speed_ = 20, crusing_speed_ = 15, min_speed_ = 10;
   double cohesion_weight_ = 1, alignment_weight_ = 2, seperation_weight_ = 1.5,
          avoid_domain_boundary_weight_ = 25, obstacle_avoidance_weight_ = 5;
+  TGeoNavigator* geo_nav;
 };
 
-///////////////////////////////////////////////////////////////////////////////
+// -----------------------------------------------------------------------------
 // Functor class needed to calculate neighbor data in ForEachNeighbor call
-///////////////////////////////////////////////////////////////////////////////
+// -----------------------------------------------------------------------------
 class CalculateNeighborData : public Functor<void, Agent*, double> {
  public:
   CalculateNeighborData(Boid* boid) : boid_(boid) {
@@ -144,9 +142,9 @@ class CalculateNeighborData : public Functor<void, Agent*, double> {
   int n;
 };
 
-///////////////////////////////////////////////////////////////////////////////
+// -----------------------------------------------------------------------------
 // Flocking Behaviour
-///////////////////////////////////////////////////////////////////////////////
+// -----------------------------------------------------------------------------
 struct Flocking : public Behavior {
   BDM_BEHAVIOR_HEADER(Flocking, Behavior, 1);
 
