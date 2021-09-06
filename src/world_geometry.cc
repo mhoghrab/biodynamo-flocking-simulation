@@ -2,24 +2,30 @@
 #include "sim_param.h"
 
 void WorldGeometry::CreateCentreBox() {
-  // gSystem->Load("libGeom");
   const auto *param = bdm::Simulation::GetActive()->GetParam();
-  // const auto *sparam = param->Get<bdm::SimParam>();
-  double centre = (param->max_bound - param->min_bound) / 2;
+  double max_bound = param->max_bound;
+  double min_bound = param->min_bound;
+  double centre = (max_bound - min_bound) / 2;
 
   new TGeoManager();
 
   TGeoMaterial *mat = new TGeoMaterial("Vacuum", 0, 0, 0);
   TGeoMedium *med = new TGeoMedium("Vacuum", 1, mat);
 
-  // ToDo: creating TopVolumne corresponding to the bdm domain
-  TGeoVolume *top = gGeoManager->MakeBox("Top", med, 2000, 2000, 2000);
+  //// ToDo: creating TopVolumne corresponding to the bdm domain
+  TGeoVolume *top = gGeoManager->MakeBox("Top", med, 4000, 4000, 4000);
   gGeoManager->SetTopVolume(top);
 
-  // creating a box with half length 100 (200x200x200) in the centre of the
-  // bdm domain
+  // creating a boundary box for the bdm domain
   TGeoTranslation *tr1 = new TGeoTranslation(centre, centre, centre);
-  TGeoVolume *box_1 = gGeoManager->MakeBox("box_1", med, 100, 100, 100);
-  top->AddNode(box_1, 1, tr1);
+  TGeoVolume *boundary_box =
+      gGeoManager->MakeBox("boundary_box", med, centre, centre, centre);
+  top->AddNode(boundary_box, 1, tr1);
+
+  // creating a simple obstacle box
+  // TGeoTranslation *tr_obst_1 = new TGeoTranslation(0, 0, 0);
+  TGeoVolume *obst_1 = gGeoManager->MakeBox("obst_1", med, 100, 100, 100);
+  boundary_box->AddNode(obst_1, 1);
+
   gGeoManager->CloseGeometry();
 }

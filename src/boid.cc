@@ -9,7 +9,8 @@ void Boid::InitializeMembers() {
 
   actual_diameter_ = sparam->actual_diameter;
   SetPerceptionRadius(sparam->perception_radius);
-  SetPerceptionAngle(sparam->perception_angle);
+  double perception_angle_rad = (sparam->perception_angle_deg / 180) * M_PI;
+  SetPerceptionAngle(perception_angle_rad);
   max_force_ = sparam->max_force;
   max_speed_ = sparam->max_speed;
   crusing_speed_ = sparam->crusing_speed;
@@ -58,10 +59,15 @@ Double3 Boid::ClampUpperLower(Double3 vector, double upper_limit,
 }
 
 bool Boid::CheckIfVisible(Double3 point) {
+  if ((point - GetPosition()).Norm() == 0) {
+    return true;
+  }
+
   Double3 cone_normal = heading_direction_;
   Double3 direction_normal = (point - GetPosition()).Normalize();
-  double cosAngle = cone_normal * direction_normal;
-  if (cosAngle >= cos_perception_angle_) {
+  double cos_angle = cone_normal * direction_normal;
+
+  if (cos_angle >= cos_perception_angle_) {
     return true;
   } else {
     return false;
@@ -75,7 +81,7 @@ Double3 Boid::AvoidDomainBoundary() {
 
   Double3 avoid_domain_boundary_force = {0, 0, 0};
   Double3 position = GetPosition();
-  double get_away_velocity = 0.7 * min_speed_;
+  double get_away_velocity = 0.4 * min_speed_;
   double avoidance_distance = 0.3 * perception_radius_;
 
   for (int i = 0; i <= 2; i++) {
@@ -132,7 +138,7 @@ Double3 Boid::OpenLoopDomain(Double3 position) {
 
 Double3 Boid::SteerTowards(Double3 vector) {
   if (vector.Norm() == 0) {
-    return Double3{0, 0, 0};
+    return {0, 0, 0};
   }
   Double3 steer = vector.Normalize() * crusing_speed_ - velocity_;
   return UpperLimit(steer, max_force_);
@@ -161,22 +167,135 @@ void Boid::AccelerationAccumulator(Double3 acceleration_to_add) {
 }
 
 Double3 Boid::ObstacleAvoidance() {
-  Double3 force;
-
   // Update navigator
-  gGeoManager->SetCurrentPoint(new_position_[0], new_position_[1],
-                               new_position_[2]);
+  Double3 position = GetPosition();
+  gGeoManager->SetCurrentPoint(position[0], position[1], position[2]);
   gGeoManager->SetCurrentDirection(heading_direction_[0], heading_direction_[1],
                                    heading_direction_[2]);
-  gGeoManager->FindNextBoundary(50);
-  if (gGeoManager->GetSafeDistance() < 50) {
-    Double_t* normal_t = gGeoManager->FindNormal();
-    force = {-normal_t[0], -normal_t[1], -normal_t[2]};
+
+  gGeoManager->FindNextBoundary(obst_avoid_dist_);
+  if (gGeoManager->GetStep() == obst_avoid_dist_) {
+    // heading_direction_ is clear
+    return {0, 0, 0};
   } else {
-    force = {0, 0, 0};
+    return SteerTowards(GetUnobstructedDirection());
   }
-  return force;
 }
+
+Double3 Boid::GetUnobstructedDirection() {
+  double viewing_distance = 400;
+  Double3 best_direction;
+  double furthest_unobstructed_distance = 0;
+
+  std::vector<Double3> directions =
+      GetTransformedDirections(heading_direction_);
+  Double3 position = GetPosition();
+
+  for (int i = 0; i < (int)directions.size(); i++) {
+    gGeoManager->SetCurrentPoint(position[0], position[1], position[2]);
+    gGeoManager->SetCurrentDirection(directions[i][0], directions[i][1],
+                                     directions[i][2]);
+    gGeoManager->FindNextBoundary(viewing_distance);
+    double step = gGeoManager->GetStep();
+    if (step == viewing_distance) {
+      // no obstacle within viewing_distance in direction
+      return directions[i];
+    } else {
+      // obstacle is in direction
+      if (step > furthest_unobstructed_distance) {
+        furthest_unobstructed_distance = step;
+        best_direction = directions[i];
+      }
+    }
+  }
+  // no clear direction is found, return best_direction
+  return best_direction;
+}
+
+std::vector<Double3> Boid::GetTransformedDirections(Double3 heading_direction) {
+  // max_idx is the maximal index of the original directions that still is in
+  // viewing cone of a boid
+  int n_dir = directions_.size();
+  int max_idx = std::floor((n_dir / 2) * (1 - cos_perception_angle_));
+  std::vector<Double3> directions_aligned = directions_;
+  directions_aligned.resize(max_idx);
+
+  // calculate the rotation axis (= crossprodukt directions_[0] x
+  // heading_direction_) and the rotation angle
+  // only works if the two vectors are not parallel, so check for that first
+  double angle = acos(directions_[0] * heading_direction_);
+  if (angle < 0.001) {
+    if (signbit(heading_direction_[2]) == 0) {
+      // heading_direction_ and directions_[0] show in the same direction since
+      // directions_ = {0,0,1} and heading_direction_[2] > 0
+      return directions_aligned;
+    } else {
+      // heading_direction_ and directions_[0] show in opposite directions
+      for (int i = 0; i < max_idx; i++)
+        directions_aligned[i] = directions_aligned[i] * -1;
+      return directions_aligned;
+    }
+  }
+
+  Double3 axis = {-heading_direction_[1], heading_direction_[0], 0};
+  axis = axis.Normalize();
+  double cos_half_angle = cos(angle / 2);
+  double sin_half_angle = sin(angle / 2);
+
+  //// here quaternion rotation is used to rotates directions_[0] onto
+  //// heading_directionand and apply the same rotation to the other directions
+  // define the Quaternion responible for aligning the vectors and define the
+  // rotation matrix [col_0, col_1, col_2]
+  Double4 Quat = {cos_half_angle, axis[0] * sin_half_angle,
+                  axis[1] * sin_half_angle, axis[2] * sin_half_angle};
+
+  Double3 col_0 = {1 - 2 * Quat[2] * Quat[2] - 2 * Quat[3] * Quat[3],
+                   2 * Quat[1] * Quat[2] + 2 * Quat[0] * Quat[3],
+                   2 * Quat[1] * Quat[3] - 2 * Quat[0] * Quat[2]};
+  Double3 col_1 = {2 * Quat[1] * Quat[2] - 2 * Quat[0] * Quat[3],
+                   1 - 2 * Quat[1] * Quat[1] - 2 * Quat[3] * Quat[3],
+                   2 * Quat[2] * Quat[3] + 2 * Quat[0] * Quat[1]};
+  Double3 col_2 = {2 * Quat[1] * Quat[3] + 2 * Quat[0] * Quat[2],
+                   2 * Quat[2] * Quat[3] - 2 * Quat[0] * Quat[1],
+                   1 - 2 * Quat[1] * Quat[1] - 2 * Quat[2] * Quat[2]};
+
+  // rotation matrix * directions[i] to transform all directions to the boids
+  // reference system
+
+  for (int i = 0; i < max_idx; i++) {
+    directions_aligned.at(i) = col_0 * directions_[i][0] +
+                               col_1 * directions_[i][1] +
+                               col_2 * directions_[i][2];
+  }
+  return directions_aligned;
+}
+
+std::vector<Double3> GetDirections() {
+  // using the golden spiral method to generate "evenly" distributed points on
+  // the unit sphere
+  // directions[0] = {0,0,1};  the angle to this starting
+  // point increases uniformly with the index
+
+  double golden_ratio = (1 + sqrt(5)) / 2;
+  double angle_inc = M_PI * 2 * golden_ratio;
+  int n_dir = 200;
+
+  std::vector<Double3> directions(n_dir);
+
+  for (int i = 0; i < n_dir; i++) {
+    double t = (double)i / (double)n_dir;
+    double phi = acos(1 - 2 * t);
+    double theta = angle_inc * i;
+
+    double x = sin(phi) * cos(theta);
+    double y = sin(phi) * sin(theta);
+    double z = 1 - 2 * t;  // = cos(phi);
+    directions.at(i) = {x, y, z};
+  }
+  return directions;
+}
+
+const std::vector<Double3> Boid::directions_ = GetDirections();
 
 void CalculateNeighborData::operator()(Agent* neighbor,
                                        double squared_distance) {

@@ -4,7 +4,7 @@
     "compute_target": "cuda",
     "statistics": false,
     "bound_space": true,
-    "max_bound": 2000,
+    "max_bound": 1000,
     "min_bound": 0,
     "simulation_step_freq": 10,
     "simulation_time_step": 0.01,
@@ -18,19 +18,19 @@
   },
   "bdm::SimParam": {
     "_typename": "bdm::SimParam",
-    "n_boids": 1000,
+    "n_boids": 300,
     "actual_diameter": 15,
     "perception_radius": 150,
-    "perception_angle": 1.88495559215388,
-    "max_force": 3,
+    "perception_angle_deg": 120,
+    "max_force": 5,
     "max_speed": 15,
     "min_speed": 8,
     "crusing_speed": 12,
     "cohesion_weight": 1,
     "alignment_weight": 2,
     "seperation_weight": 1.5,
-    "avoid_domain_boundary_weight": 25,
-    "obstacle_avoidance_weight": 50,
+    "avoid_domain_boundary_weight": 10,
+    "obstacle_avoidance_weight": 15,
     "simulation_steps": 400
   }
 }
