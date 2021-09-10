@@ -73,7 +73,7 @@ class Boid : public Cell {
 
   // Returns the position vector, but if a coordinate exceeds the boundarys it
   // will get set to the opposite site of the somain
-  Double3 OpenLoopDomain(Double3 position);
+  Double3 UpdatePositionTorus(Double3 position);
 
   // Returns a Steering-Force in order to steer velocity towards
   // (vector.Normalize() * crusing_speed_)
@@ -100,27 +100,31 @@ class Boid : public Cell {
   Double3 ObstacleAvoidance();
 
   // iterates over the transformed directions returned by
-  // Boid::GetTransformedDirections until a unobstructed direction (within a set
+  // Boid::TransformDirections until a unobstructed direction (within a set
   // distance) is found; if all directions are obstructed returns the one with
   // the furthest away obstacle
   Double3 GetUnobstructedDirection();
 
-  // rotates directions_[0] onto heading_direction and applies the same rotation
-  // to the other directions; returns a vector with the rotated directions that
-  // lie with in the boids field of view
-  std::vector<Double3> GetTransformedDirections(Double3 heading_direction);
+  // rotates ref_A onto ref_B and applies same rotaion onto all vectors in
+  // directions and returns a new vector
+  std::vector<Double3> TransformDirections(std::vector<Double3> directions,
+                                           Double3 ref_A, Double3 ref_B);
+
+  bool DirectionIsUnobstructed(Double3 direction, Double3 position,
+                               double distance);
 
   // -----------------------------------------------------------------------------
   Double3 new_position_, new_velocity_;
   Double3 acceleration_, velocity_, heading_direction_;
   double actual_diameter_ = 15, perception_radius_ = 150,
-         obst_avoid_dist_ = 100, perception_angle_ = M_PI,
-         cos_perception_angle_;
+         obst_avoid_dist_ = 100, perception_angle_ = M_PI;
+  double cos_perception_angle_;
   double max_force_ = 3, max_speed_ = 20, crusing_speed_ = 15, min_speed_ = 10;
   double cohesion_weight_ = 1, alignment_weight_ = 2, seperation_weight_ = 1.5,
          avoid_domain_boundary_weight_ = 25, obstacle_avoidance_weight_ = 10;
-  TGeoNavigator* geo_nav;
   static const std::vector<Double3> directions_;
+  static const std::vector<Double3> cone_directions_;
+  TGeoNavigator* navig_;
 };
 
 // -----------------------------------------------------------------------------

@@ -20,16 +20,16 @@ void Boid::InitializeMembers() {
   seperation_weight_ = sparam->seperation_weight;
   avoid_domain_boundary_weight_ = sparam->avoid_domain_boundary_weight;
   obstacle_avoidance_weight_ = sparam->obstacle_avoidance_weight;
+  obst_avoid_dist_ = sparam->obst_avoid_dist;
 
   SetNewPosition(GetPosition());
   SetNewVelocity(GetVelocity());
 
-  // Initialize Navigator
-  gGeoManager->InitTrack(new_position_[0], new_position_[1], new_position_[2],
-                         heading_direction_[0], heading_direction_[1],
-                         heading_direction_[2]);
-}
+  navig_ = gGeoManager->AddNavigator();
+};
 
+// -----------------------------------------------------------------------------
+// Double3 helper functions
 Double3 Boid::UpperLimit(Double3 vector, double upper_limit) {
   double length = vector.Norm();
   if (length > upper_limit) {
@@ -58,6 +58,7 @@ Double3 Boid::ClampUpperLower(Double3 vector, double upper_limit,
   return vector;
 }
 
+// -----------------------------------------------------------------------------
 bool Boid::CheckIfVisible(Double3 point) {
   if ((point - GetPosition()).Norm() == 0) {
     return true;
@@ -74,6 +75,7 @@ bool Boid::CheckIfVisible(Double3 point) {
   }
 }
 
+// -----------------------------------------------------------------------------
 Double3 Boid::AvoidDomainBoundary() {
   const auto* param = Simulation::GetActive()->GetParam();
   double min_bound = param->min_bound;
@@ -109,7 +111,39 @@ Double3 Boid::AvoidDomainBoundary() {
   return UpperLimit(avoid_domain_boundary_force, max_force_);
 }
 
-Double3 Boid::OpenLoopDomain(Double3 position) {
+Double3 Boid::SteerTowards(Double3 vector) {
+  if (vector.Norm() == 0) {
+    return {0, 0, 0};
+  }
+  Double3 steer = vector.Normalize() * crusing_speed_ - velocity_;
+  return UpperLimit(steer, max_force_);
+}
+
+// -----------------------------------------------------------------------------
+// Data Updates
+void Boid::UpdateNewPosition() {
+  new_position_ += new_velocity_;
+  // new_position_ = UpdatePositionTorus(newPosition);
+}
+
+void Boid::UpdateNewVelocity() {
+  acceleration_ = UpperLimit(acceleration_, max_force_);
+  new_velocity_ += acceleration_;
+  new_velocity_ = ClampUpperLower(new_velocity_, max_speed_, min_speed_);
+}
+
+void Boid::ResetAcceleration() { acceleration_ = {0, 0, 0}; }
+
+void Boid::UpdateData() {
+  SetVelocity(GetNewVelocity());
+  SetPosition(GetNewPosition());
+}
+
+void Boid::AccelerationAccumulator(Double3 acceleration_to_add) {
+  acceleration_ += acceleration_to_add;
+}
+
+Double3 Boid::UpdatePositionTorus(Double3 position) {
   const auto* param = Simulation::GetActive()->GetParam();
   double min_bound = param->min_bound;
   double max_bound = param->max_bound;
@@ -136,45 +170,12 @@ Double3 Boid::OpenLoopDomain(Double3 position) {
   return position;
 }
 
-Double3 Boid::SteerTowards(Double3 vector) {
-  if (vector.Norm() == 0) {
-    return {0, 0, 0};
-  }
-  Double3 steer = vector.Normalize() * crusing_speed_ - velocity_;
-  return UpperLimit(steer, max_force_);
-}
-
-void Boid::UpdateNewPosition() {
-  new_position_ += new_velocity_;
-  // new_position_ = OpenLoopDomain(newPosition);
-}
-
-void Boid::UpdateNewVelocity() {
-  acceleration_ = UpperLimit(acceleration_, max_force_);
-  new_velocity_ += acceleration_;
-  new_velocity_ = ClampUpperLower(new_velocity_, max_speed_, min_speed_);
-}
-
-void Boid::ResetAcceleration() { acceleration_ = {0, 0, 0}; }
-
-void Boid::UpdateData() {
-  SetVelocity(GetNewVelocity());
-  SetPosition(GetNewPosition());
-}
-
-void Boid::AccelerationAccumulator(Double3 acceleration_to_add) {
-  acceleration_ += acceleration_to_add;
-}
-
+// -----------------------------------------------------------------------------
+// Obstacle Avoidance
 Double3 Boid::ObstacleAvoidance() {
-  // Update navigator
-  Double3 position = GetPosition();
-  gGeoManager->SetCurrentPoint(position[0], position[1], position[2]);
-  gGeoManager->SetCurrentDirection(heading_direction_[0], heading_direction_[1],
-                                   heading_direction_[2]);
-
-  gGeoManager->FindNextBoundary(obst_avoid_dist_);
-  if (gGeoManager->GetStep() == obst_avoid_dist_) {
+  DirectionIsUnobstructed(heading_direction_, GetPosition(), obst_avoid_dist_);
+  if (DirectionIsUnobstructed(heading_direction_, GetPosition(),
+                              obst_avoid_dist_)) {
     // heading_direction_ is clear
     return {0, 0, 0};
   } else {
@@ -182,26 +183,35 @@ Double3 Boid::ObstacleAvoidance() {
   }
 }
 
+bool Boid::DirectionIsUnobstructed(Double3 direction, Double3 position,
+                                   double distance) {
+  // navig_->SetCurrentPoint(position[0], position[1], position[2]);
+  // navig_->SetCurrentDirection(direction[0], direction[1], direction[2]);
+  navig_->InitTrack(position[0], position[1], position[2], direction[0],
+                    direction[1], direction[2]);
+  navig_->FindNextBoundary(distance);
+  if (navig_->GetStep() == distance) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 Double3 Boid::GetUnobstructedDirection() {
-  double viewing_distance = 400;
   Double3 best_direction;
   double furthest_unobstructed_distance = 0;
 
   std::vector<Double3> directions =
-      GetTransformedDirections(heading_direction_);
-  Double3 position = GetPosition();
+      TransformDirections(directions_, heading_direction_, directions_[0]);
 
   for (int i = 0; i < (int)directions.size(); i++) {
-    gGeoManager->SetCurrentPoint(position[0], position[1], position[2]);
-    gGeoManager->SetCurrentDirection(directions[i][0], directions[i][1],
-                                     directions[i][2]);
-    gGeoManager->FindNextBoundary(viewing_distance);
-    double step = gGeoManager->GetStep();
-    if (step == viewing_distance) {
-      // no obstacle within viewing_distance in direction
+    if (DirectionIsUnobstructed(directions[i], GetPosition(),
+                                obst_avoid_dist_)) {
+      // no obstacle within obst_avoid_dist_ in direction
       return directions[i];
     } else {
       // obstacle is in direction
+      double step = navig_->GetStep();
       if (step > furthest_unobstructed_distance) {
         furthest_unobstructed_distance = step;
         best_direction = directions[i];
@@ -212,38 +222,38 @@ Double3 Boid::GetUnobstructedDirection() {
   return best_direction;
 }
 
-std::vector<Double3> Boid::GetTransformedDirections(Double3 heading_direction) {
-  // max_idx is the maximal index of the original directions that still is in
-  // viewing cone of a boid
-  int n_dir = directions_.size();
-  int max_idx = std::floor((n_dir / 2) * (1 - cos_perception_angle_));
-  std::vector<Double3> directions_aligned = directions_;
-  directions_aligned.resize(max_idx);
+std::vector<Double3> Boid::TransformDirections(std::vector<Double3> directions,
+                                               Double3 ref_A, Double3 ref_B) {
+  // rotates ref_A onto ref_B and applies same rotaion onto all vectors in
+  // directions
+  int n_dir = directions.size();
+  std::vector<Double3> directions_aligned(n_dir);
 
-  // calculate the rotation axis (= crossprodukt directions_[0] x
-  // heading_direction_) and the rotation angle
-  // only works if the two vectors are not parallel, so check for that first
-  double angle = acos(directions_[0] * heading_direction_);
-  if (angle < 0.001) {
-    if (signbit(heading_direction_[2]) == 0) {
-      // heading_direction_ and directions_[0] show in the same direction since
-      // directions_ = {0,0,1} and heading_direction_[2] > 0
-      return directions_aligned;
-    } else {
-      // heading_direction_ and directions_[0] show in opposite directions
-      for (int i = 0; i < max_idx; i++)
-        directions_aligned[i] = directions_aligned[i] * -1;
-      return directions_aligned;
-    }
+  // calculate the angle betwenn ref_A and ref_B used for rotation
+  double angle = acos(ref_A * ref_B);
+
+  double thresh = 0.001;
+  // test if ref_A and ref_B are parallel
+  if (angle < thresh) {
+    directions_aligned = directions;
+    return directions_aligned;
+  }
+  // test if ref_A and ref_B are anti-parallel
+  if (angle - M_PI < thresh) {
+    for (int i = 0; i < n_dir; i++)
+      directions_aligned[i] = directions[i] * -1;
+    return directions_aligned;
   }
 
-  Double3 axis = {-heading_direction_[1], heading_direction_[0], 0};
+  // calculate the rotation axis (= crossprodukt ref_A x ref_B)
+  Double3 axis = {ref_A[1] * ref_B[2] - ref_A[2] * ref_B[1],
+                  ref_A[2] * ref_B[0] - ref_A[0] * ref_B[2],
+                  ref_A[0] * ref_B[1] - ref_A[1] * ref_B[0]};
   axis = axis.Normalize();
   double cos_half_angle = cos(angle / 2);
   double sin_half_angle = sin(angle / 2);
 
-  //// here quaternion rotation is used to rotates directions_[0] onto
-  //// heading_directionand and apply the same rotation to the other directions
+  // quaternion rotation is used to calculate the rotation matrix;
   // define the Quaternion responible for aligning the vectors and define the
   // rotation matrix [col_0, col_1, col_2]
   Double4 Quat = {cos_half_angle, axis[0] * sin_half_angle,
@@ -262,24 +272,24 @@ std::vector<Double3> Boid::GetTransformedDirections(Double3 heading_direction) {
   // rotation matrix * directions[i] to transform all directions to the boids
   // reference system
 
-  for (int i = 0; i < max_idx; i++) {
-    directions_aligned.at(i) = col_0 * directions_[i][0] +
-                               col_1 * directions_[i][1] +
-                               col_2 * directions_[i][2];
+  for (int i = 0; i < n_dir; i++) {
+    directions_aligned.at(i) = col_0 * directions[i][0] +
+                               col_1 * directions[i][1] +
+                               col_2 * directions[i][2];
   }
   return directions_aligned;
 }
 
+// initializing the static const direction-"arrays"
 std::vector<Double3> GetDirections() {
   // using the golden spiral method to generate "evenly" distributed points on
   // the unit sphere
-  // directions[0] = {0,0,1};  the angle to this starting
+  // directions[0] = {0,0,1};  the angle towards this starting
   // point increases uniformly with the index
 
   double golden_ratio = (1 + sqrt(5)) / 2;
   double angle_inc = M_PI * 2 * golden_ratio;
   int n_dir = 200;
-
   std::vector<Double3> directions(n_dir);
 
   for (int i = 0; i < n_dir; i++) {
@@ -294,9 +304,31 @@ std::vector<Double3> GetDirections() {
   }
   return directions;
 }
-
 const std::vector<Double3> Boid::directions_ = GetDirections();
 
+std::vector<Double3> GetConeDirections() {
+  // ....
+  double cone_angle_deg = 20;
+  double cone_angle_rad = (cone_angle_deg / 180) * M_PI;
+  int n_dir = 20;
+
+  std::vector<Double3> directions(n_dir);
+
+  for (int i = 0; i < n_dir; i++) {
+    double phi = i * 2 * M_PI / n_dir;
+    double x = cos(phi);
+    double y = sin(phi);
+    double z = 1 / tan(cone_angle_rad);
+
+    Double3 direction = {x, y, z};
+    directions.at(i) = direction.Normalize();
+  }
+  return directions;
+}
+const std::vector<Double3> Boid::cone_directions_ = GetConeDirections();
+
+// -----------------------------------------------------------------------------
+// CalculateNeighborData
 void CalculateNeighborData::operator()(Agent* neighbor,
                                        double squared_distance) {
   auto* other = bdm_static_cast<const Boid*>(neighbor);
@@ -342,6 +374,8 @@ Double3 CalculateNeighborData::GetAvgVel() {
   return sum_vel_;
 }
 
+// -----------------------------------------------------------------------------
+// Flocking
 void Flocking::Run(Agent* agent) {
   auto* boid = dynamic_cast<Boid*>(agent);
   auto* ctxt = Simulation::GetActive()->GetExecutionContext();

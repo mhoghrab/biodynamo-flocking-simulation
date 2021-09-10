@@ -38,7 +38,6 @@ int Simulate(int argc, const char** argv) {
   // Initializing the wold geometry / obstacles
   auto* worldgeo = new WorldGeometry();
   worldgeo->CreateCentreBox();
-
   // Create n_boids boids uniformly distributed in 3D space with a random
   // staring velocity
   size_t n_boids = sparam->n_boids;
@@ -46,12 +45,20 @@ int Simulate(int argc, const char** argv) {
   double x_vel, y_vel, z_vel;
 
   for (size_t i = 0; i < n_boids; ++i) {
-    x_coord = random->Uniform(param->min_bound, param->max_bound);
-    y_coord = random->Uniform(param->min_bound, param->max_bound);
-    z_coord = random->Uniform(param->min_bound, param->max_bound);
+    // x_coord = random->Uniform(param->min_bound, param->max_bound);
+    // y_coord = random->Uniform(param->min_bound, param->max_bound);
+    // z_coord = random->Uniform(param->min_bound, param->max_bound);
+
+    x_coord = param->min_bound + 200 + random->Uniform(-5, 5);
+    y_coord = param->min_bound + param->max_bound / 2 + random->Uniform(-5, 5);
+    z_coord = param->min_bound + param->max_bound / 2 + random->Uniform(-5, 5);
 
     int vel_bound = 5;
-    x_vel = random->Uniform(-vel_bound, vel_bound);
+    // x_vel = random->Uniform(-vel_bound, vel_bound);
+    // y_vel = random->Uniform(-vel_bound, vel_bound);
+    // z_vel = random->Uniform(-vel_bound, vel_bound);
+
+    x_vel = 10;
     y_vel = random->Uniform(-vel_bound, vel_bound);
     z_vel = random->Uniform(-vel_bound, vel_bound);
 
