@@ -46,5 +46,5 @@ void WorldGeometry::CreateCentreBox() {
 
   gGeoManager->CloseGeometry();
 
-  //gGeoManager->Export("world_geometry.gdml");
+  // gGeoManager->Export("world_geometry.gdml");
 }

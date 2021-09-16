@@ -22,6 +22,7 @@
     "actual_diameter": 15,
     "perception_angle_deg": 120,
     "perception_radius": 150,
+    "neighbor_distance": 100,
     "obst_avoid_dist": 200,
     "max_force": 2,
     "max_speed": 10,

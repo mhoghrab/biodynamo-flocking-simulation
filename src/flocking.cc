@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 //
 // Copyright (C) 2021 CERN & Newcastle University for the benefit of the
 // BioDynaMo collaboration. All Rights Reserved.
@@ -10,7 +10,7 @@
 // See the NOTICE file distributed with this work for additional information
 // regarding copyright ownership.
 //
-// -----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 #ifndef FLOCKING_H_
 #define FLOCKING_H_
 
@@ -38,8 +38,8 @@ int Simulate(int argc, const char** argv) {
   // Initializing the wold geometry / obstacles
   auto* worldgeo = new WorldGeometry();
   worldgeo->CreateCentreBox();
-  // Create n_boids boids uniformly distributed in 3D space with a random
-  // staring velocity
+
+  // spawning boids
   size_t n_boids = sparam->n_boids;
   double x_coord, y_coord, z_coord;
   double x_vel, y_vel, z_vel;
@@ -49,6 +49,10 @@ int Simulate(int argc, const char** argv) {
     // y_coord = random->Uniform(param->min_bound, param->max_bound);
     // z_coord = random->Uniform(param->min_bound, param->max_bound);
 
+    // x_coord = random->Uniform(500, 1000);
+    // y_coord = random->Uniform(500, 1000);
+    // z_coord = random->Uniform(0, 100);
+
     x_coord = param->min_bound + 200 + random->Uniform(-5, 5);
     y_coord = param->min_bound + param->max_bound / 2 + random->Uniform(-5, 5);
     z_coord = param->min_bound + param->max_bound / 2 + random->Uniform(-5, 5);
@@ -57,6 +61,10 @@ int Simulate(int argc, const char** argv) {
     // x_vel = random->Uniform(-vel_bound, vel_bound);
     // y_vel = random->Uniform(-vel_bound, vel_bound);
     // z_vel = random->Uniform(-vel_bound, vel_bound);
+
+    // z_vel = 10;
+    // x_vel = random->Uniform(-vel_bound, vel_bound);
+    // y_vel = random->Uniform(-vel_bound, vel_bound);
 
     x_vel = 10;
     y_vel = random->Uniform(-vel_bound, vel_bound);
@@ -70,30 +78,6 @@ int Simulate(int argc, const char** argv) {
 
     rm->AddAgent(boid);
   }
-
-  // -----------------------------------------------------------------------------
-  // auto* boid = new Boid({0, 500, 500});
-  // boid->SetVelocity({1, 0, 0});
-  // boid->InitializeMembers();
-  // boid->AddBehavior(new Flocking());
-  // rm->AddAgent(boid);
-  // -----------------------------------------------------------------------------
-  // auto* boid = new Boid({250, 250, 250});
-  // boid->SetVelocity({0, 0, 1});
-  // boid->InitializeMembers();
-  // rm->AddAgent(boid);
-
-  // std::vector<Double3> directions =
-  // boid->GetDirections(boid->heading_direction_); Double3 position =
-  // boid->GetPosition();
-
-  // for (std::size_t i = 0; i < directions.size(); i++) {
-  //   Double3 dir = {directions[i][0], directions[i][1], directions[i][2]};
-  //   Double3 pos = position + dir*10;
-  //   auto boid = new Boid(pos);
-  //   rm->AddAgent(boid);
-  // }
-  // -----------------------------------------------------------------------------
 
   // add PostScheduledOp to set the actual position / velocity to the calculated
   // newPosition / newVelocity

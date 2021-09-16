@@ -1,8 +1,8 @@
 paraview export of obstacles
 
- independent navigators to comute distances etc.
-
-
   // max_dir_idx is the maximal index of the original directions_ that still is in
   // the viewing cone of a boid
   max_dir_idx = std::floor((directions.size() / 2) * (1 - cos_perception_angle));
+
+
+  d_a = Norm_sig(boid_->neighbor_distance_)
