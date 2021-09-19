@@ -6,7 +6,7 @@
 #include "core/operation/operation_registry.h"
 #include "core/resource_manager.h"
 
-namespace bdm {
+using namespace bdm;
 
 struct UpdateOp : public StandaloneOperationImpl {
   BDM_OP_HEADER(UpdateOp);
@@ -20,6 +20,5 @@ struct UpdateOp : public StandaloneOperationImpl {
     });
   }
 };
-}  // namespace bdm
 
 #endif  // UPDATE_OP_H_

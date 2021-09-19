@@ -1,16 +1,8 @@
-// directions array static dings, dass das nur einmal berechnet werden muss und immer auf das verwiesen wird#
+paraview export of obstacles
 
-L2F functor nicht in der aktuellen version?
+  // max_dir_idx is the maximal index of the original directions_ that still is in
+  // the viewing cone of a boid
+  max_dir_idx = std::floor((directions.size() / 2) * (1 - cos_perception_angle));
 
-CalculateNeighborData auslagern
 
-Normalize() function  falls norm 0
-
-json parameter
-
-OperationRegistry::GetInstance()->AddOperationImpl(
-      "UpdateOp", OpComputeTarget::kCpu, new UpdateOp());
-
-norm squared function
-
-openloopdomain ktorus
+  d_a = Norm_sig(boid_->neighbor_distance_)

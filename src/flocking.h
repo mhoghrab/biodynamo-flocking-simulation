@@ -14,8 +14,6 @@
 #ifndef FLOCKING_H_
 #define FLOCKING_H_
 
-#include "biodynamo.h"
-
 namespace bdm {
 
 int Simulate(int argc, const char** argv);
