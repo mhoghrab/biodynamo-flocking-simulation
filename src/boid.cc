@@ -34,10 +34,57 @@ void Boid::InitializeMembers() {
 };
 
 // ---------------------------------------------------------------------------
-// Double3 helper functions
+// Various Getter and Setter
+
+Double3 Boid::GetVelocity() const { return velocity_; }
+void Boid::SetVelocity(Double3 velocity) {
+  velocity_ = velocity;
+  if (velocity_.Norm() != 0) {
+    heading_direction_ = velocity_.Normalize();
+  }
+  // why does it result in 2 completly different behaviors when using
+  // velocity.Normalize() or velocity_.Normalize() ???????????
+}
+
+void Boid::SetHeadingDirection(Double3 dir) {
+  heading_direction_ = dir.Normalize();
+}
+
+Double3 Boid::GetAcceleration() const { return acceleration_; }
+void Boid::SetAcceleration(Double3 acceleration) {
+  acceleration_ = acceleration;
+}
+
+Double3 Boid::GetNewPosition() const { return new_position_; }
+void Boid::SetNewPosition(Double3 position) { new_position_ = position; }
+
+Double3 Boid::GetNewVelocity() const { return new_velocity_; }
+void Boid::SetNewVelocity(Double3 velocity) { new_velocity_ = velocity; }
+
+double Boid::GetActualDiameter() const { return actual_diameter_; }
+void Boid::SetActualDiameter(double actual_diameter) {
+  actual_diameter_ = actual_diameter;
+}
+
+double Boid::GetPerceptionRadius() const { return perception_radius_; }
+void Boid::SetPerceptionRadius(double perception_radius) {
+  perception_radius_ = perception_radius;
+  SetDiameter(perception_radius_ * 2);
+}
+
+void Boid::SetPerceptionAngle(double angle) {
+  perception_angle_ = angle;
+  cos_perception_angle_ = std::cos(angle);
+}
+
+// ---------------------------------------------------------------------------
+// Double3 Methods
 
 Double3 Boid::UpperLimit(Double3 vector, double upper_limit) {
   double length = vector.Norm();
+  if (length == 0) {
+    return {0, 0, 0};
+  }
   if (length > upper_limit) {
     vector = (vector / length) * upper_limit;
   }
@@ -46,6 +93,9 @@ Double3 Boid::UpperLimit(Double3 vector, double upper_limit) {
 
 Double3 Boid::LowerLimit(Double3 vector, double lower_limit) {
   double length = vector.Norm();
+  if (length == 0) {
+    return {0, 0, 0};
+  }
   if (length < lower_limit) {
     vector = (vector / length) * lower_limit;
   }
@@ -55,6 +105,9 @@ Double3 Boid::LowerLimit(Double3 vector, double lower_limit) {
 Double3 Boid::ClampUpperLower(Double3 vector, double upper_limit,
                               double lower_limit) {
   double length = vector.Norm();
+  if (length == 0) {
+    return {0, 0, 0};
+  }
   if (length > upper_limit) {
     vector = (vector / length) * upper_limit;
   }

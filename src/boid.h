@@ -6,6 +6,7 @@
 #include "core/behavior/behavior.h"
 #include "core/container/math_array.h"
 #include "core/functor.h"
+//#include "world_geometry.h"
 
 namespace bdm {
 
@@ -25,48 +26,36 @@ class Boid : public Cell {
 
   // ---------------------------------------------------------------------------
   // Various Getter and Setter
-  Double3 GetVelocity() const { return velocity_; }
-  void SetVelocity(Double3 velocity) {
-    velocity_ = velocity;
-    if (velocity_.Norm() == 0)
-      heading_direction_ = {0, 0, 0};
-    else
-      heading_direction_ = velocity_.Normalize();
-    // why does it result in 2 completly different behaviors when using
-    // velocity.Normalize() or velocity_.Normalize() ???????????
-  }
 
-  Double3 GetAcceleration() const { return acceleration_; }
-  void SetAcceleration(Double3 acceleration) { acceleration_ = acceleration; }
+  Double3 GetVelocity() const;
+  void SetVelocity(Double3 velocity);
 
-  Double3 GetNewPosition() const { return new_position_; }
-  void SetNewPosition(Double3 position) { new_position_ = position; }
+  Double3 GetAcceleration() const;
+  void SetAcceleration(Double3 acceleration);
 
-  Double3 GetNewVelocity() const { return new_velocity_; }
-  void SetNewVelocity(Double3 velocity) { new_velocity_ = velocity; }
+  void SetHeadingDirection(Double3 dir);
 
-  double GetActualDiameter() const { return actual_diameter_; }
-  void SetActualDiameter(double actual_diameter) {
-    actual_diameter_ = actual_diameter;
-  }
+  Double3 GetNewPosition() const;
+  void SetNewPosition(Double3 position);
 
-  double GetPerceptionRadius() const { return perception_radius_; }
-  void SetPerceptionRadius(double perception_radius) {
-    perception_radius_ = perception_radius;
-    SetDiameter(perception_radius_ * 2);
-  }
+  Double3 GetNewVelocity() const;
+  void SetNewVelocity(Double3 velocity);
 
-  void SetPerceptionAngle(double angle) {
-    perception_angle_ = angle;
-    cos_perception_angle_ = std::cos(angle);
-  }
+  double GetActualDiameter() const;
+  void SetActualDiameter(double actual_diameter);
+
+  double GetPerceptionRadius() const;
+  void SetPerceptionRadius(double perception_radius);
+
+  void SetPerceptionAngle(double angle);
 
   // ---------------------------------------------------------------------------
-  // Double3 helper functions
+  // Double3 Methods
 
-  // Limit/Clamp the length of a vector to a upper or/and lower limit
   Double3 UpperLimit(Double3 vector, double upper_limit);
+
   Double3 LowerLimit(Double3 vector, double lower_limit);
+
   Double3 ClampUpperLower(Double3 vector, double upper_limit,
                           double lower_limit);
 
@@ -90,8 +79,8 @@ class Boid : public Cell {
   // Update new_position_ by adding new_velocity_
   void UpdateNewPosition();
 
-  // Update new_velocity_ by adding acceleration_ and clamping it by max_speed_
-  // and min_speed_
+  // Update new_velocity_ by adding acceleration_ and clamping it by
+  // max_speed_ and min_speed_
   void UpdateNewVelocity();
 
   // Sets acceleration_ to {0,0,0}
@@ -194,8 +183,8 @@ struct Flocking2 : public Behavior {
   void Run(Agent* agent) override;
 };
 
-// Functor class needed to calculate neighbor data in Flocking2 ForEachNeighbor
-// call
+// Functor class needed to calculate neighbor data in Flocking2
+// ForEachNeighbor call
 class CalculateNeighborData2 : public Functor<void, Agent*, double> {
  public:
   CalculateNeighborData2(Boid* boid) : boid_(boid) {
