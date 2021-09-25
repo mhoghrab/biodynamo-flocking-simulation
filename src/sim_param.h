@@ -17,6 +17,7 @@ struct SimParam : public ParamGroup {
   double perception_angle_deg = 120;
   double obst_avoid_dist = 150;
   double neighbor_distance = 10;
+  double obstacle_distance = 40;
   double max_force = 3;
   double max_speed = 15;
   double crusing_speed = 12;

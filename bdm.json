@@ -23,6 +23,7 @@
     "perception_angle_deg": 120,
     "perception_radius": 75,
     "neighbor_distance": 50,
+    "obstacle_distance": 50,
     "obst_avoid_dist": 200,
     "max_force": 1.5,
     "max_speed": 8,

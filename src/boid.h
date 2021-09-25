@@ -116,17 +116,49 @@ class Boid : public Cell {
                                            Double3 ref_A, Double3 ref_B);
 
   // ---------------------------------------------------------------------------
+  // Flocking2 Algorithm
+
+  Double3 GetFlocking2Force();
+
+  // Double3 GetProjectedPosition(SphereObstacle* sphere);
+
+  // Double3 GetProjectedVelocity(SphereObstacle* sphere);
+
+  double Norm_sig(Double3 z);
+
+  double Norm_sig(double z);
+
+  double Phi(double z);
+
+  double phi_h(double z, double h);
+
+  double sigmoid_1(double z);
+
+  double sigmoid_2(double z);
+
+  double Phi_a(double z);
+
+  double Phi_b(double z);
+
+  Double3 GetBoidInteractionTerm(Double3 position, Double3 velocity);
+
+  // Double3 GetSphereInteractionTerm(SphereObstacle* sphere);
+
+  double eps = 0.1;
+
+  // ---------------------------------------------------------------------------
   Double3 new_position_, new_velocity_;
   Double3 acceleration_, velocity_, heading_direction_;
   double actual_diameter_ = 15, perception_radius_ = 150,
          neighbor_distance_ = 40, obst_avoid_dist_ = 100,
-         perception_angle_ = M_PI;
+         obstacle_distance_ = 40, perception_angle_ = M_PI;
   double cos_perception_angle_;
   double max_force_ = 3, max_speed_ = 20, crusing_speed_ = 15, min_speed_ = 10;
   double cohesion_weight_ = 1, alignment_weight_ = 2, seperation_weight_ = 1.5,
          avoid_domain_boundary_weight_ = 25, obstacle_avoidance_weight_ = 10;
   static const std::vector<Double3> directions_;
   static const std::vector<Double3> cone_directions_;
+  bool obstacles_obstruct_view_ = true;
   TGeoNavigator* navig_;
 };
 
