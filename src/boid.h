@@ -6,6 +6,7 @@
 #include "core/behavior/behavior.h"
 #include "core/container/math_array.h"
 #include "core/functor.h"
+//#include "world_geometry.h"
 
 namespace bdm {
 
@@ -25,48 +26,36 @@ class Boid : public Cell {
 
   // ---------------------------------------------------------------------------
   // Various Getter and Setter
-  Double3 GetVelocity() const { return velocity_; }
-  void SetVelocity(Double3 velocity) {
-    velocity_ = velocity;
-    if (velocity_.Norm() == 0)
-      heading_direction_ = {0, 0, 0};
-    else
-      heading_direction_ = velocity_.Normalize();
-    // why does it result in 2 completly different behaviors when using
-    // velocity.Normalize() or velocity_.Normalize() ???????????
-  }
 
-  Double3 GetAcceleration() const { return acceleration_; }
-  void SetAcceleration(Double3 acceleration) { acceleration_ = acceleration; }
+  Double3 GetVelocity() const;
+  void SetVelocity(Double3 velocity);
 
-  Double3 GetNewPosition() const { return new_position_; }
-  void SetNewPosition(Double3 position) { new_position_ = position; }
+  Double3 GetAcceleration() const;
+  void SetAcceleration(Double3 acceleration);
 
-  Double3 GetNewVelocity() const { return new_velocity_; }
-  void SetNewVelocity(Double3 velocity) { new_velocity_ = velocity; }
+  void SetHeadingDirection(Double3 dir);
 
-  double GetActualDiameter() const { return actual_diameter_; }
-  void SetActualDiameter(double actual_diameter) {
-    actual_diameter_ = actual_diameter;
-  }
+  Double3 GetNewPosition() const;
+  void SetNewPosition(Double3 position);
 
-  double GetPerceptionRadius() const { return perception_radius_; }
-  void SetPerceptionRadius(double perception_radius) {
-    perception_radius_ = perception_radius;
-    SetDiameter(perception_radius_ * 2);
-  }
+  Double3 GetNewVelocity() const;
+  void SetNewVelocity(Double3 velocity);
 
-  void SetPerceptionAngle(double angle) {
-    perception_angle_ = angle;
-    cos_perception_angle_ = std::cos(angle);
-  }
+  double GetActualDiameter() const;
+  void SetActualDiameter(double actual_diameter);
+
+  double GetPerceptionRadius() const;
+  void SetPerceptionRadius(double perception_radius);
+
+  void SetPerceptionAngle(double angle);
 
   // ---------------------------------------------------------------------------
-  // Double3 helper functions
+  // Double3 Methods
 
-  // Limit/Clamp the length of a vector to a upper or/and lower limit
   Double3 UpperLimit(Double3 vector, double upper_limit);
+
   Double3 LowerLimit(Double3 vector, double lower_limit);
+
   Double3 ClampUpperLower(Double3 vector, double upper_limit,
                           double lower_limit);
 
@@ -90,8 +79,8 @@ class Boid : public Cell {
   // Update new_position_ by adding new_velocity_
   void UpdateNewPosition();
 
-  // Update new_velocity_ by adding acceleration_ and clamping it by max_speed_
-  // and min_speed_
+  // Update new_velocity_ by adding acceleration_ and clamping it by
+  // max_speed_ and min_speed_
   void UpdateNewVelocity();
 
   // Sets acceleration_ to {0,0,0}
@@ -127,17 +116,52 @@ class Boid : public Cell {
                                            Double3 ref_A, Double3 ref_B);
 
   // ---------------------------------------------------------------------------
+  // Flocking2 Algorithm
+
+  Double3 GetFlocking2Force();
+
+  // Double3 GetProjectedPosition(SphereObstacle* sphere);
+  Double3 GetProjectedPosition(Double3 centre_, double radius_);
+
+  // Double3 GetProjectedVelocity(SphereObstacle* sphere);
+  Double3 GetProjectedVelocity(Double3 centre_, double radius_);
+
+  double Norm_sig(Double3 z);
+
+  double Norm_sig(double z);
+
+  double Phi(double z);
+
+  double phi_h(double z, double h);
+
+  double sigmoid_1(double z);
+
+  double sigmoid_2(double z);
+
+  double Phi_a(double z);
+
+  double Phi_b(double z);
+
+  Double3 GetBoidInteractionTerm(Double3 position, Double3 velocity);
+
+  // Double3 GetSphereInteractionTerm(SphereObstacle* sphere);
+  Double3 GetSphereInteractionTerm(Double3 centre_, double radius_);
+
+  double eps = 0.1;
+
+  // ---------------------------------------------------------------------------
   Double3 new_position_, new_velocity_;
   Double3 acceleration_, velocity_, heading_direction_;
   double actual_diameter_ = 15, perception_radius_ = 150,
          neighbor_distance_ = 40, obst_avoid_dist_ = 100,
-         perception_angle_ = M_PI;
+         obstacle_distance_ = 40, perception_angle_ = M_PI;
   double cos_perception_angle_;
   double max_force_ = 3, max_speed_ = 20, crusing_speed_ = 15, min_speed_ = 10;
   double cohesion_weight_ = 1, alignment_weight_ = 2, seperation_weight_ = 1.5,
          avoid_domain_boundary_weight_ = 25, obstacle_avoidance_weight_ = 10;
   static const std::vector<Double3> directions_;
   static const std::vector<Double3> cone_directions_;
+  bool obstacles_obstruct_view_ = true;
   TGeoNavigator* navig_;
 };
 
@@ -194,42 +218,19 @@ struct Flocking2 : public Behavior {
   void Run(Agent* agent) override;
 };
 
-// Functor class needed to calculate neighbor data in Flocking2 ForEachNeighbor
-// call
+// Functor class needed to calculate neighbor data in Flocking2
+// ForEachNeighbor call
 class CalculateNeighborData2 : public Functor<void, Agent*, double> {
  public:
-  CalculateNeighborData2(Boid* boid) : boid_(boid) {
-    q_i = boid->GetPosition();
-    p_i = boid->GetVelocity();
-
-    r_a = Norm_sig(boid_->perception_radius_);
-    d_a = Norm_sig(boid_->neighbor_distance_);
-    eps = 0.1;  //????????????????????
-  }
+  CalculateNeighborData2(Boid* boid) : boid_(boid) {}
   virtual ~CalculateNeighborData2() {}
 
   void operator()(Agent* neighbor, double squared_distance) override;
 
-  Double3 GetProtocol1();
-  Double3 GetProtocol2();
+  Double3 GetU_a() { return u_a; };
 
- private:
-  // ---------------------------------------------------------------------------
-  double Norm_sig(Double3 z);
-  double Norm_sig(double z);
-
-  double Phi_a(double z);
-  double Phi(double z);
-  double phi_h(double z);
-  double r_a, d_a;
-  double sigma_1(double z);
-  double eps;
-
-  // ---------------------------------------------------------------------------
   Boid* boid_;
-  Double3 q_i;
-  Double3 p_i;
-  Double3 u_i_a = {0, 0, 0};
+  Double3 u_a = {0, 0, 0};
 };
 
 }  // namespace bdm
