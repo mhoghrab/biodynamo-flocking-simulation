@@ -73,7 +73,7 @@ int Simulate(int argc, const char** argv) {
     auto* boid = new Boid({x_coord, y_coord, z_coord});
     boid->SetVelocity({x_vel, y_vel, z_vel});
     boid->InitializeMembers();
-    boid->AddBehavior(new Flocking());
+    boid->AddBehavior(new Flocking2());
 
     rm->AddAgent(boid);
   }

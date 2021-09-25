@@ -219,38 +219,15 @@ struct Flocking2 : public Behavior {
 // ForEachNeighbor call
 class CalculateNeighborData2 : public Functor<void, Agent*, double> {
  public:
-  CalculateNeighborData2(Boid* boid) : boid_(boid) {
-    q_i = boid->GetPosition();
-    p_i = boid->GetVelocity();
-
-    r_a = Norm_sig(boid_->perception_radius_);
-    d_a = Norm_sig(boid_->neighbor_distance_);
-    eps = 0.1;  //????????????????????
-  }
+  CalculateNeighborData2(Boid* boid) : boid_(boid) {}
   virtual ~CalculateNeighborData2() {}
 
   void operator()(Agent* neighbor, double squared_distance) override;
 
-  Double3 GetProtocol1();
-  Double3 GetProtocol2();
+  Double3 GetU_a() { return u_a; };
 
- private:
-  // ---------------------------------------------------------------------------
-  double Norm_sig(Double3 z);
-  double Norm_sig(double z);
-
-  double Phi_a(double z);
-  double Phi(double z);
-  double phi_h(double z);
-  double r_a, d_a;
-  double sigma_1(double z);
-  double eps;
-
-  // ---------------------------------------------------------------------------
   Boid* boid_;
-  Double3 q_i;
-  Double3 p_i;
-  Double3 u_i_a = {0, 0, 0};
+  Double3 u_a = {0, 0, 0};
 };
 
 }  // namespace bdm

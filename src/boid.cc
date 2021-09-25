@@ -407,7 +407,7 @@ Double3 Boid::GetFlocking2Force() {
   auto* ctxt = Simulation::GetActive()->GetExecutionContext();
   CalculateNeighborData2 NeighborData(this);
   ctxt->ForEachNeighbor(NeighborData, *this, pow(perception_radius_, 2));
-  Double3 u_a = {0, 0, 0};  // NeighborData.GetU_a();
+  Double3 u_a = NeighborData.GetU_a();
 
   // u_y
   Double3 target_pos = {1000, 1000, 1000};
@@ -635,26 +635,17 @@ Double3 CalculateNeighborData::GetAvgVel() {
 
 void Flocking2::Run(Agent* agent) {
   auto* boid = dynamic_cast<Boid*>(agent);
-  auto* ctxt = Simulation::GetActive()->GetExecutionContext();
 
-  double perception_radius = boid->GetPerceptionRadius();
-  double perception_radius_squared = perception_radius * perception_radius;
+  Double3 acceleration = boid->GetFlocking2Force();
 
-  CalculateNeighborData2 NeighborData(boid);
-  ctxt->ForEachNeighbor(NeighborData, *boid, perception_radius_squared);
-
-  Double3 acceleration = NeighborData.GetProtocol1();
-  Double3 avoid_domain_boundary_force = boid->AvoidDomainBoundary();
-  Double3 avoid_obstacle_force = boid->ObstacleAvoidance();
+  // simple sphere in the centre
+  // Double3 centre = {1000, 1000, 1000};
+  // auto* sphere = new SphereObstacle(centre, 100);
+  // Double3 sphere_avoidance_force = boid->GetSphereInteractionTerm(sphere);
 
   boid->ResetAcceleration();
-  // std::cout << acceleration.Norm() << std::endl;
-
-  boid->AccelerationAccumulator(acceleration * 0.1);
-  // boid->AccelerationAccumulator(avoid_domain_boundary_force *
-  //                               boid->avoid_domain_boundary_weight_);
-  // boid->AccelerationAccumulator(avoid_obstacle_force *
-  //                               boid->obstacle_avoidance_weight_);
+  boid->AccelerationAccumulator(acceleration);
+  // boid->AccelerationAccumulator(sphere_avoidance_force);
 
   boid->UpdateNewVelocity();
   boid->UpdateNewPosition();
@@ -663,72 +654,10 @@ void Flocking2::Run(Agent* agent) {
 void CalculateNeighborData2::operator()(Agent* neighbor,
                                         double squared_distance) {
   auto* neighbor_boid = bdm_static_cast<const Boid*>(neighbor);
-  Double3 q_j = neighbor_boid->GetPosition();
-  Double3 p_j = neighbor_boid->GetVelocity();
+  Double3 neighbor_position = neighbor_boid->GetPosition();
+  Double3 neighbor_velocity = neighbor_boid->GetVelocity();
 
-  // check if neighbor is in viewing cone
-  if (boid_->CheckIfVisible(q_j)) {
-    // add gradient-based term to u_i_a
-    Double3 n_ij = (q_j - q_i) / sqrt(1 + eps * pow((q_j - q_i).Norm(), 2));
-    u_i_a += n_ij * Phi_a(Norm_sig(q_j - q_i));
-
-    // add consensus term
-    double z2 = Norm_sig(boid_->perception_radius_);
-    double r_a2 = (sqrt(1 + eps * z2 * z2) - 1) / eps;
-    double a_ij = phi_h(Norm_sig(q_j - q_i) / r_a2);
-    u_i_a += (p_j - p_i) * a_ij;
-  }
+  u_a += boid_->GetBoidInteractionTerm(neighbor_position, neighbor_velocity);
 }
-
-Double3 CalculateNeighborData2::GetProtocol1() {
-  return u_i_a;
-  // return boid_->UpperLimit(u_i_a, boid_->max_force_);
-}
-
-Double3 CalculateNeighborData2::GetProtocol2() {
-  double c_1 = 0.01, c_2 = 0.01;
-  /////////////////////////////////////////////// 2do2dod2odo2doo
-  Double3 q_r = {750, 750, 1500}, p_r = {0, 0, 0};
-  Double3 u_i_y = (q_i - q_r) * (-c_1) + (p_i - p_r) * (-c_2);
-  return u_i_a + u_i_y;
-}
-
-double CalculateNeighborData2::Norm_sig(Double3 z) {
-  return (sqrt(1 + eps * pow(z.Norm(), 2)) - 1) / eps;
-}
-
-double CalculateNeighborData2::Norm_sig(double z) {
-  double result = (sqrt(1 + eps * z * z) - 1) / eps;
-  return result;
-}
-
-double CalculateNeighborData2::Phi_a(double z) {
-  // std::cout << z / r_a << std::endl;
-  // std::cout << r_a << std::endl;
-  double z2 = Norm_sig(boid_->perception_radius_);
-  double r_a2 = (sqrt(1 + eps * z2 * z2) - 1) / eps;
-  return phi_h(z / r_a2) * Phi(z - d_a);
-}
-
-double CalculateNeighborData2::Phi(double z) {
-  // 0 < a <= b
-  double a = 0.5;
-  double b = 0.5;
-  double c = abs(a - b) / sqrt(4 * a * b);
-  return ((a + b) * sigma_1(z + c) + (a - b)) / 2;
-}
-
-double CalculateNeighborData2::phi_h(double z) {
-  double h = 0.2;
-  if (z >= 0 && z < h) {
-    return 1;
-  }
-  if (z >= h && z <= 1) {
-    return (1 + cos(M_PI * (z - h) / (1 - h))) / 2;
-  }
-  return 0;
-}
-
-double CalculateNeighborData2::sigma_1(double z) { return z / sqrt(1 + z * z); }
 
 }  // namespace bdm
