@@ -121,8 +121,10 @@ class Boid : public Cell {
   Double3 GetFlocking2Force();
 
   // Double3 GetProjectedPosition(SphereObstacle* sphere);
+  Double3 GetProjectedPosition(Double3 centre_, double radius_);
 
   // Double3 GetProjectedVelocity(SphereObstacle* sphere);
+  Double3 GetProjectedVelocity(Double3 centre_, double radius_);
 
   double Norm_sig(Double3 z);
 
@@ -143,6 +145,7 @@ class Boid : public Cell {
   Double3 GetBoidInteractionTerm(Double3 position, Double3 velocity);
 
   // Double3 GetSphereInteractionTerm(SphereObstacle* sphere);
+  Double3 GetSphereInteractionTerm(Double3 centre_, double radius_);
 
   double eps = 0.1;
 

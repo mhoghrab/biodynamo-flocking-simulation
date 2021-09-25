@@ -1,6 +1,8 @@
 #include "world_geometry.h"
 #include "sim_param.h"
 
+namespace bdm {
+
 void WorldGeometry::CreateCentreBox() {
   const auto *param = bdm::Simulation::GetActive()->GetParam();
   double max_bound = param->max_bound;
@@ -48,3 +50,5 @@ void WorldGeometry::CreateCentreBox() {
 
   // gGeoManager->Export("world_geometry.gdml");
 }
+
+}  // namespace bdm

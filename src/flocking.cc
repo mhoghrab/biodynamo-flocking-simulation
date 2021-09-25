@@ -48,24 +48,11 @@ int Simulate(int argc, const char** argv) {
     x_coord = random->Uniform(100, 300);
     y_coord = random->Uniform(900, 1100);
     z_coord = random->Uniform(900, 1100);
-
     // x_coord = random->Uniform(param->min_bound, param->max_bound);
     // y_coord = random->Uniform(param->min_bound, param->max_bound);
     // z_coord = random->Uniform(param->min_bound, param->max_bound);
 
-    // x_coord = random->Uniform(500, 1000);
-    // y_coord = random->Uniform(500, 1000);
-    // z_coord = random->Uniform(0, 100);
-
     int vel_bound = 2;
-    // x_vel = random->Uniform(-vel_bound, vel_bound);
-    // y_vel = random->Uniform(-vel_bound, vel_bound);
-    // z_vel = random->Uniform(-vel_bound, vel_bound);
-
-    // z_vel = 10;
-    // x_vel = random->Uniform(-vel_bound, vel_bound);
-    // y_vel = random->Uniform(-vel_bound, vel_bound);
-
     x_vel = 10;
     y_vel = random->Uniform(-vel_bound, vel_bound);
     z_vel = random->Uniform(-vel_bound, vel_bound);
@@ -78,8 +65,7 @@ int Simulate(int argc, const char** argv) {
     rm->AddAgent(boid);
   }
 
-  // add PostScheduledOp to set the actual position / velocity to the calculated
-  // newPosition / newVelocity
+  // add PostScheduledOp to update Boid Data ftaer each timestep
   OperationRegistry::GetInstance()->AddOperationImpl(
       "UpdateOp", OpComputeTarget::kCpu, new UpdateOp());
   auto* update_op = NewOperation("UpdateOp");

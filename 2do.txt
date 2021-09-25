@@ -6,3 +6,17 @@ paraview export of obstacles
 
 
   d_a = Norm_sig(boid_->neighbor_distance_)
+
+
+  GetUnobstructedDirection best_obstructed_direction
+
+  matrix vector produkt SphereObstacle::GetProjectedVelocity
+
+  eps
+
+  double r_a = Norm_sig(neighbor_distance_);  // obstacle_distance_
+
+  fix crash when uncommenting // #ifndef WORLD_GEOMETRY_H_ etc.
+
+  add proper SphereObstacle
+
