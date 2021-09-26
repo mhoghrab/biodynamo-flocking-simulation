@@ -420,16 +420,16 @@ Double3 Boid::GetFlocking2Force() {
   return u_a + u_y;
 }
 
-Double3 Boid::GetProjectedPosition(Double3 centre_, double radius_) {
-  double my = radius_ / (GetPosition() - centre_).Norm();
-  Double3 projected_position = GetPosition() * my + centre_ * (1 - my);
+Double3 Boid::GetProjectedPosition(SphereObstacle* sphere) {
+  double my = sphere->radius_ / (GetPosition() - sphere->centre_).Norm();
+  Double3 projected_position = GetPosition() * my + sphere->centre_ * (1 - my);
 
   return projected_position;
 }
 
-Double3 Boid::GetProjectedVelocity(Double3 centre_, double radius_) {
-  double my = radius_ / (GetPosition() - centre_).Norm();
-  Double3 a = (GetPosition() - centre_);
+Double3 Boid::GetProjectedVelocity(SphereObstacle* sphere) {
+  double my = sphere->radius_ / (GetPosition() - sphere->centre_).Norm();
+  Double3 a = (GetPosition() - sphere->centre_);
   a = a.Normalize();
 
   // Projection Matrix P = I - a*a^t
@@ -472,11 +472,9 @@ double Boid::phi_h(double z, double h) {
   return 0;
 }
 
-double Boid::sigmoid_1(double z) {
-  return z / std::sqrt(1 + z * z); }
+double Boid::sigmoid_1(double z) { return z / std::sqrt(1 + z * z); }
 
-double Boid::sigmoid_2(double z) {
-  return z / (1 + std::abs(z)); }
+double Boid::sigmoid_2(double z) { return z / (1 + std::abs(z)); }
 
 double Boid::Phi_a(double z) {
   // r_a and d_a sometimes get initialzied as nan, so as a temp fix always
@@ -510,9 +508,9 @@ Double3 Boid::GetBoidInteractionTerm(Double3 position, Double3 velocity) {
   return u_a;
 }
 
-Double3 Boid::GetSphereInteractionTerm(Double3 centre_, double radius_) {
+Double3 Boid::GetSphereInteractionTerm(SphereObstacle* sphere) {
   Double3 u_b = {0, 0, 0};
-  Double3 q_ik = GetProjectedPosition(centre_, radius_);
+  Double3 q_ik = GetProjectedPosition(sphere);
 
   // first term
   Double3 n_ik = (q_ik - GetPosition()) /
@@ -522,12 +520,21 @@ Double3 Boid::GetSphereInteractionTerm(Double3 centre_, double radius_) {
   // second term
   double r_a = Norm_sig(obstacle_distance_);
   double b_ik = phi_h(Norm_sig(q_ik - GetPosition()) / r_a, 0.9);
-  u_b +=
-      (GetProjectedVelocity(centre_, radius_) - GetVelocity()) *
-      b_ik;
+  u_b += (GetProjectedVelocity(sphere) - GetVelocity()) * b_ik;
 
   return u_b;
 };
+
+Double3 Boid::GetFlocking2ObstacleAvoidanceForce() {
+  Double3 force = {0, 0, 0};
+
+  Double3 centre = {1000, 1000, 1000};
+  double radius = 50;
+  auto* sphere = new SphereObstacle(centre, radius);
+  force += GetSphereInteractionTerm(sphere);
+
+  return force;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Flocking Behaviour
@@ -638,17 +645,13 @@ Double3 CalculateNeighborData::GetAvgVel() {
 void Flocking2::Run(Agent* agent) {
   auto* boid = dynamic_cast<Boid*>(agent);
 
-  Double3 acceleration = boid->GetFlocking2Force();
-
-  // simple sphere in the centre
-  Double3 centre = {1000, 1000, 1000};
-  double radius = 100;
-  Double3 sphere_avoidance_force =
-      boid->GetSphereInteractionTerm(centre, radius);
+  Double3 flocking2_force = boid->GetFlocking2Force();
+  Double3 flocking2_obstacle_avoidance_force =
+      boid->GetFlocking2ObstacleAvoidanceForce();
 
   boid->ResetAcceleration();
-  boid->AccelerationAccumulator(acceleration);
-  boid->AccelerationAccumulator(sphere_avoidance_force);
+  boid->AccelerationAccumulator(flocking2_force);
+  boid->AccelerationAccumulator(flocking2_obstacle_avoidance_force);
 
   boid->UpdateNewVelocity();
   boid->UpdateNewPosition();
