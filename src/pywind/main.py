@@ -93,8 +93,8 @@ def Main():
     L = 0.59 * reference_height
 
     # Parameters to steer the the size of the output shape (not 100% clear yet)
-    noise_shape = np.array([490, 490, 490, 3])
-    grid_levels = np.array([7, 7, 7])
+    noise_shape = np.array([250, 250, 250, 3])
+    grid_levels = np.array([5, 5, 5])
 
     # Define the Covariance-Kernel. There are different kernels available but
     # VonKarman is simplest kernel generating a homogeneous wind profile.
