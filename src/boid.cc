@@ -19,11 +19,11 @@ void Boid::InitializeMembers() {
   SetPerceptionAngle(perception_angle_rad);
   max_force_ = sparam->max_force;
   max_speed_ = sparam->max_speed;
-  crusing_speed_ = sparam->crusing_speed;
+  cruising_speed_ = sparam->cruising_speed;
   min_speed_ = sparam->min_speed;
   cohesion_weight_ = sparam->cohesion_weight;
   alignment_weight_ = sparam->alignment_weight;
-  seperation_weight_ = sparam->seperation_weight;
+  separation_weight_ = sparam->separation_weight;
   avoid_domain_boundary_weight_ = sparam->avoid_domain_boundary_weight;
   obstacle_avoidance_weight_ = sparam->obstacle_avoidance_weight;
   obst_avoid_dist_ = sparam->obst_avoid_dist;
@@ -185,7 +185,7 @@ Double3 Boid::SteerTowards(Double3 vector) {
   if (vector.Norm() == 0) {
     return {0, 0, 0};
   }
-  Double3 steer = vector.Normalize() * crusing_speed_ - velocity_;
+  Double3 steer = vector.Normalize() * cruising_speed_ - velocity_;
   return UpperLimit(steer, max_force_);
 }
 
@@ -472,11 +472,9 @@ double Boid::phi_h(double z, double h) {
   return 0;
 }
 
-double Boid::sigmoid_1(double z) {
-  return z / std::sqrt(1 + z * z); }
+double Boid::sigmoid_1(double z) { return z / std::sqrt(1 + z * z); }
 
-double Boid::sigmoid_2(double z) {
-  return z / (1 + std::abs(z)); }
+double Boid::sigmoid_2(double z) { return z / (1 + std::abs(z)); }
 
 double Boid::Phi_a(double z) {
   // r_a and d_a sometimes get initialzied as nan, so as a temp fix always
@@ -522,9 +520,7 @@ Double3 Boid::GetSphereInteractionTerm(Double3 centre_, double radius_) {
   // second term
   double r_a = Norm_sig(obstacle_distance_);
   double b_ik = phi_h(Norm_sig(q_ik - GetPosition()) / r_a, 0.9);
-  u_b +=
-      (GetProjectedVelocity(centre_, radius_) - GetVelocity()) *
-      b_ik;
+  u_b += (GetProjectedVelocity(centre_, radius_) - GetVelocity()) * b_ik;
 
   return u_b;
 };
@@ -559,7 +555,7 @@ void Flocking::Run(Agent* agent) {
   // Update acceleration_, new_velocity_, new_position_ of boid
   boid->ResetAcceleration();
 
-  boid->AccelerationAccumulator(seperation_force * boid->seperation_weight_);
+  boid->AccelerationAccumulator(seperation_force * boid->separation_weight_);
   boid->AccelerationAccumulator(cohesion_force * boid->cohesion_weight_);
   // boid->AccelerationAccumulator(social_force * 5);
   boid->AccelerationAccumulator(alignment_force * boid->alignment_weight_);
