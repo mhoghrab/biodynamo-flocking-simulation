@@ -10,6 +10,9 @@
     "simulation_time_step": 0.01,
     "visualization_interval": 1,
     "export_visualization": true,
+    "unschedule_default_operations": [
+      "mechanical forces"
+    ],
     "visualize_agents": {
       "Boid": [
         "actual_diameter_"
