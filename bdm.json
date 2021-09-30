@@ -18,15 +18,16 @@
   },
   "bdm::SimParam": {
     "_typename": "bdm::SimParam",
-    "n_boids": 200,
+    "n_boids": 100,
     "actual_diameter": 10,
     "perception_angle_deg": 120,
     "perception_radius": 75,
+    "obstacle_perception_radius": 100,
     "neighbor_distance": 50,
-    "obstacle_distance": 50,
+    "obstacle_distance": 60,
     "obst_avoid_dist": 200,
     "max_force": 1.5,
-    "max_speed": 8,
+    "max_speed": 5,
     "min_speed": 3,
     "crusing_speed": 4,
     "cohesion_weight": 1,
@@ -34,6 +35,7 @@
     "seperation_weight": 1.5,
     "avoid_domain_boundary_weight": 10,
     "obstacle_avoidance_weight": 20,
-    "simulation_steps": 500
+    "simulation_steps": 500,
+    "obstacles_obstruct_view_": true
   }
 }

@@ -4,19 +4,22 @@ paraview export of obstacles
   // the viewing cone of a boid
   max_dir_idx = std::floor((directions.size() / 2) * (1 - cos_perception_angle));
 
-
-  d_a = Norm_sig(boid_->neighbor_distance_)
-
-
   GetUnobstructedDirection best_obstructed_direction
-
-  matrix vector produkt SphereObstacle::GetProjectedVelocity
 
   eps
 
-  double r_a = Norm_sig(neighbor_distance_);  // obstacle_distance_
+Double3 Boid::GetProjectedVelocity(CuboidObstacle* cuboid)
 
-  fix crash when uncommenting // #ifndef WORLD_GEOMETRY_H_ etc.
 
-  add proper SphereObstacle
+commentieren/ dokumentieren
 
+double obstacle_perception_radius_ adaptieren
+
+
+boid_perception_radius_ adden
+
+
+projection stuff when inside obstacel
+
+
+InitializeMembers sortieren

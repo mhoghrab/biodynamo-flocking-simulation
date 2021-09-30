@@ -14,6 +14,7 @@ struct SimParam : public ParamGroup {
   size_t n_boids = 1000;
   double actual_diameter = 15;
   double perception_radius = 300;
+  double obstacle_perception_radius = 150;
   double perception_angle_deg = 120;
   double obst_avoid_dist = 150;
   double neighbor_distance = 10;
@@ -28,6 +29,7 @@ struct SimParam : public ParamGroup {
   double avoid_domain_boundary_weight = 25;
   double obstacle_avoidance_weight = 5;
   uint64_t simulation_steps = 10;
+  bool obstacles_obstruct_view = true;
 };
 
 }  // namespace bdm

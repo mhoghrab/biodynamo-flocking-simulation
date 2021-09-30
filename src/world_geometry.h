@@ -7,20 +7,40 @@
 
 namespace bdm {
 
-struct WorldGeometry {
-  void CreateCentreBox();
-};
+void CreateRootObstacles();
 
-class SphereObstacle {
- public:
-  SphereObstacle(Double3 centre, double radius) {
-    centre_ = centre;
-    radius_ = radius;
-  }
+////////////////////////////////////////////////////////////////////////////////
+// Sphere and Cuboid Obstacles
+////////////////////////////////////////////////////////////////////////////////
+
+void InitializeRootGeometry();
+
+// ---------------------------------------------------------------------------
+
+struct SphereObstacle {
+  SphereObstacle(Double3 centre, double radius);
 
   Double3 centre_;
   double radius_;
+
+ public:
+  static std::vector<SphereObstacle> sphere_obstacles;
 };
+
+void CreateSphereObstacles();
+
+// ---------------------------------------------------------------------------
+
+struct CuboidObstacle {
+  CuboidObstacle(Double3 lower_bound, Double3 upper_bound);
+
+  Double3 lower_bound_, upper_bound_;
+
+ public:
+  static std::vector<CuboidObstacle> cuboid_obstacles;
+};
+
+void CreateCuboidObstacles();
 
 }  // namespace bdm
 

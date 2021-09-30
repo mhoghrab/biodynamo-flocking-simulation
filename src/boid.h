@@ -118,14 +118,34 @@ class Boid : public Cell {
   // ---------------------------------------------------------------------------
   // Flocking2 Algorithm
 
+  // iterates over all neightbors and adds the interaction terms;
+  // returns a flocking force that produces a-latices in free space
   Double3 GetFlocking2Force();
 
+  // iterates over all spherical and cuboid obstacles and adds the interaction
+  // terms; returns a force to avoid them and keep the desired distance
+  Double3 GetFlocking2ObstacleAvoidanceForce();
+
+  // returns the interaction force for a given boid
+  Double3 GetBoidInteractionTerm(Double3 position, Double3 velocity);
+
+  // returns the interaction force for a given sphere
+  Double3 GetSphereInteractionTerm(SphereObstacle* sphere);
+
+  // returns the interaction force for a given cuboid
+  Double3 GetCuboidInteractionTerm(CuboidObstacle* cuboid);
+
+  // funcions to project the boids position / velocity onto a obstacel sphere or
+  // cuboid
   Double3 GetProjectedPosition(SphereObstacle* sphere);
-  // Double3 GetProjectedPosition(Double3 centre_, double radius_);
+
+  Double3 GetProjectedPosition(CuboidObstacle* cuboid);
 
   Double3 GetProjectedVelocity(SphereObstacle* sphere);
-  // Double3 GetProjectedVelocity(Double3 centre_, double radius_);
 
+  Double3 GetProjectedVelocity(CuboidObstacle* cuboid);
+
+  // functions needed to calculate the interaction terms
   double Norm_sig(Double3 z);
 
   double Norm_sig(double z);
@@ -142,28 +162,22 @@ class Boid : public Cell {
 
   double Phi_b(double z);
 
-  Double3 GetBoidInteractionTerm(Double3 position, Double3 velocity);
-
-  Double3 GetSphereInteractionTerm(SphereObstacle* sphere);
-  // Double3 GetSphereInteractionTerm(Double3 centre_, double radius_);
-
-  Double3 GetFlocking2ObstacleAvoidanceForce();
-
   double eps = 0.1;
-
+  double h_a = 0.2, h_b = 0.9;
   // ---------------------------------------------------------------------------
   Double3 new_position_, new_velocity_;
   Double3 acceleration_, velocity_, heading_direction_;
-  double actual_diameter_ = 15, perception_radius_ = 150,
-         neighbor_distance_ = 40, obst_avoid_dist_ = 100,
-         obstacle_distance_ = 40, perception_angle_ = M_PI;
-  double cos_perception_angle_;
-  double max_force_ = 3, max_speed_ = 20, crusing_speed_ = 15, min_speed_ = 10;
-  double cohesion_weight_ = 1, alignment_weight_ = 2, seperation_weight_ = 1.5,
-         avoid_domain_boundary_weight_ = 25, obstacle_avoidance_weight_ = 10;
+  double actual_diameter_;
+  double perception_radius_, obstacle_perception_radius_;
+  double perception_angle_, cos_perception_angle_;
+  double neighbor_distance_, obst_avoid_dist_, obstacle_distance_;
+  double max_force_, min_speed_, crusing_speed_, max_speed_;
+  double cohesion_weight_, alignment_weight_, seperation_weight_,
+      avoid_domain_boundary_weight_, obstacle_avoidance_weight_;
+  bool obstacles_obstruct_view_ = true;
   static const std::vector<Double3> directions_;
   static const std::vector<Double3> cone_directions_;
-  bool obstacles_obstruct_view_ = true;
+
   TGeoNavigator* navig_;
 };
 

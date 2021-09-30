@@ -21,8 +21,10 @@ int Simulate(int argc, const char** argv) {
   auto* scheduler = simulation.GetScheduler();
 
   // Initializing the wold geometry / obstacles
-  auto* worldgeo = new WorldGeometry();
-  worldgeo->CreateCentreBox();
+  // CreateRootObstacles();
+  CreateSphereObstacles();
+  CreateCuboidObstacles();
+  InitializeRootGeometry();
 
   // spawning boids
   size_t n_boids = sparam->n_boids;
