@@ -69,7 +69,7 @@ class Boid : public Cell {
   Double3 AvoidDomainBoundary();
 
   // Returns a Steering-Force in order to steer velocity towards
-  // (vector.Normalize() * crusing_speed_)
+  // (vector.Normalize() * cruising_speed_)
   // Force is limited by max_force_
   Double3 SteerTowards(Double3 vector);
 
@@ -156,8 +156,8 @@ class Boid : public Cell {
          neighbor_distance_ = 40, obst_avoid_dist_ = 100,
          obstacle_distance_ = 40, perception_angle_ = M_PI;
   double cos_perception_angle_;
-  double max_force_ = 3, max_speed_ = 20, crusing_speed_ = 15, min_speed_ = 10;
-  double cohesion_weight_ = 1, alignment_weight_ = 2, seperation_weight_ = 1.5,
+  double max_force_ = 3, max_speed_ = 20, cruising_speed_ = 15, min_speed_ = 10;
+  double cohesion_weight_ = 1, alignment_weight_ = 2, separation_weight_ = 1.5,
          avoid_domain_boundary_weight_ = 25, obstacle_avoidance_weight_ = 10;
   static const std::vector<Double3> directions_;
   static const std::vector<Double3> cone_directions_;

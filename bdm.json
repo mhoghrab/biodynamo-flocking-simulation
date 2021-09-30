@@ -31,10 +31,10 @@
     "max_force": 1.5,
     "max_speed": 8,
     "min_speed": 3,
-    "crusing_speed": 4,
+    "cruising_speed": 4,
     "cohesion_weight": 1,
     "alignment_weight": 2,
-    "seperation_weight": 1.5,
+    "separation_weight": 1.5,
     "avoid_domain_boundary_weight": 10,
     "obstacle_avoidance_weight": 20,
     "simulation_steps": 500
