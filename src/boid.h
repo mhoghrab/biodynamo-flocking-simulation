@@ -72,7 +72,7 @@ class Boid : public Cell {
   Double3 AvoidDomainBoundary();
 
   // Returns a Steering-Force in order to steer velocity towards
-  // (vector.Normalize() * crusing_speed_)
+  // (vector.Normalize() * cruising_speed_)
   // Force is limited by max_force_
   Double3 SteerTowards(Double3 vector);
 

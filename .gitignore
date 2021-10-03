@@ -85,4 +85,8 @@ __pycache__/
 *.root
 *.vtu
 *.pvtu
-`
+
+
+#----------------- wind generator code ----------------------
+src/pywind/DRD_Wind
+src/pywind/data
