@@ -201,7 +201,7 @@ Double3 Boid::SteerTowards(Double3 vector) {
   if (vector.Norm() == 0) {
     return {0, 0, 0};
   }
-  Double3 steer = vector.Normalize() * cruising_speed_ - velocity_;
+  Double3 steer = vector.Normalize() * crusing_speed_ - velocity_;
   return UpperLimit(steer, max_force_);
 }
 
@@ -645,7 +645,7 @@ void Flocking::Run(Agent* agent) {
   // Update acceleration_, new_velocity_, new_position_ of boid
   boid->ResetAcceleration();
 
-  boid->AccelerationAccumulator(seperation_force * boid->separation_weight_);
+  boid->AccelerationAccumulator(seperation_force * boid->seperation_weight_);
   boid->AccelerationAccumulator(cohesion_force * boid->cohesion_weight_);
   // boid->AccelerationAccumulator(social_force * 5);
   boid->AccelerationAccumulator(alignment_force * boid->alignment_weight_);
