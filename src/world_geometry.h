@@ -1,14 +1,47 @@
-// #ifndef WORLD_GEOMETRY_H_
-// #define WORLD_GEOMETRY_H_
+// don't delete this comment or the whole program crashes, no joke... #2
+#ifndef WORLD_GEOMETRY_H_
+#define WORLD_GEOMETRY_H_
 
 #include "TGeoManager.h"
+#include "core/container/math_array.h"
 
 namespace bdm {
 
-struct WorldGeometry {
-  void CreateCentreBox();
+void CreateRootObstacles();
+
+////////////////////////////////////////////////////////////////////////////////
+// Sphere and Cuboid Obstacles
+////////////////////////////////////////////////////////////////////////////////
+
+void InitializeRootGeometry();
+
+// ---------------------------------------------------------------------------
+
+struct SphereObstacle {
+  SphereObstacle(Double3 centre, double radius);
+
+  Double3 centre_;
+  double radius_;
+
+ public:
+  static std::vector<SphereObstacle> sphere_obstacles;
 };
+
+void CreateSphereObstacles();
+
+// ---------------------------------------------------------------------------
+
+struct CuboidObstacle {
+  CuboidObstacle(Double3 lower_bound, Double3 upper_bound);
+
+  Double3 lower_bound_, upper_bound_;
+
+ public:
+  static std::vector<CuboidObstacle> cuboid_obstacles;
+};
+
+void CreateCuboidObstacles();
 
 }  // namespace bdm
 
-//#endif  // WORLD_GEOMETRY_H_
+#endif  // WORLD_GEOMETRY_H_

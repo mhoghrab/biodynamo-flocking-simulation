@@ -6,13 +6,16 @@
 #include "core/behavior/behavior.h"
 #include "core/container/math_array.h"
 #include "core/functor.h"
-//#include "world_geometry.h"
+#include "world_geometry.h"
 
 namespace bdm {
 
 ////////////////////////////////////////////////////////////////////////////////
-// Boid Class
+//----------------------------------------------------------------------------//
+// Boid Class                                                                 //
+//----------------------------------------------------------------------------//
 ////////////////////////////////////////////////////////////////////////////////
+
 class Boid : public Cell {
   BDM_AGENT_HEADER(Boid, Cell, 1);
 
@@ -69,7 +72,7 @@ class Boid : public Cell {
   Double3 AvoidDomainBoundary();
 
   // Returns a Steering-Force in order to steer velocity towards
-  // (vector.Normalize() * cruising_speed_)
+  // (vector.Normalize() * crusing_speed_)
   // Force is limited by max_force_
   Double3 SteerTowards(Double3 vector);
 
@@ -118,14 +121,36 @@ class Boid : public Cell {
   // ---------------------------------------------------------------------------
   // Flocking2 Algorithm
 
+  // iterates over all neightbors and adds the interaction terms;
+  // returns a flocking force that produces a-latices in free space
   Double3 GetFlocking2Force();
 
-  // Double3 GetProjectedPosition(SphereObstacle* sphere);
-  Double3 GetProjectedPosition(Double3 centre_, double radius_);
+  // iterates over all spherical and cuboid obstacles and adds the interaction
+  // terms; returns a force to avoid them and keep the desired distance
+  Double3 GetFlocking2ObstacleAvoidanceForce();
 
-  // Double3 GetProjectedVelocity(SphereObstacle* sphere);
-  Double3 GetProjectedVelocity(Double3 centre_, double radius_);
+  Double3 GetFlocking2NavigationalFeedbackForce();
 
+  // returns the interaction force for a given boid
+  Double3 GetBoidInteractionTerm(Double3 position, Double3 velocity);
+
+  // returns the interaction force for a given sphere
+  Double3 GetSphereInteractionTerm(SphereObstacle* sphere);
+
+  // returns the interaction force for a given cuboid
+  Double3 GetCuboidInteractionTerm(CuboidObstacle* cuboid);
+
+  // funcions to project the boids position / velocity onto a obstacel sphere or
+  // cuboid
+  Double3 GetProjectedPosition(SphereObstacle* sphere);
+
+  Double3 GetProjectedPosition(CuboidObstacle* cuboid);
+
+  Double3 GetProjectedVelocity(SphereObstacle* sphere);
+
+  Double3 GetProjectedVelocity(CuboidObstacle* cuboid);
+
+  // functions needed to calculate the interaction terms
   double Norm_sig(Double3 z);
 
   double Norm_sig(double z);
@@ -142,32 +167,37 @@ class Boid : public Cell {
 
   double Phi_b(double z);
 
-  Double3 GetBoidInteractionTerm(Double3 position, Double3 velocity);
-
-  // Double3 GetSphereInteractionTerm(SphereObstacle* sphere);
-  Double3 GetSphereInteractionTerm(Double3 centre_, double radius_);
-
-  double eps = 0.1;
-
   // ---------------------------------------------------------------------------
   Double3 new_position_, new_velocity_;
   Double3 acceleration_, velocity_, heading_direction_;
-  double actual_diameter_ = 15, perception_radius_ = 150,
-         neighbor_distance_ = 40, obst_avoid_dist_ = 100,
-         obstacle_distance_ = 40, perception_angle_ = M_PI;
-  double cos_perception_angle_;
-  double max_force_ = 3, max_speed_ = 20, cruising_speed_ = 15, min_speed_ = 10;
-  double cohesion_weight_ = 1, alignment_weight_ = 2, separation_weight_ = 1.5,
-         avoid_domain_boundary_weight_ = 25, obstacle_avoidance_weight_ = 10;
+  double actual_diameter_;
+  double perception_radius_, obstacle_perception_radius_;
+  double perception_angle_, cos_perception_angle_;
+  double neighbor_distance_, obst_avoid_dist_, obstacle_distance_;
+  double max_force_, min_speed_, crusing_speed_, max_speed_;
+  double cohesion_weight_, alignment_weight_, seperation_weight_,
+      avoid_domain_boundary_weight_, obstacle_avoidance_weight_;
+  bool obstacles_obstruct_view_ = true;
   static const std::vector<Double3> directions_;
   static const std::vector<Double3> cone_directions_;
-  bool obstacles_obstruct_view_ = true;
+
   TGeoNavigator* navig_;
+
+  // Flocking2 constants
+  double c_a_1_;
+  double c_a_2_;
+  double c_b_1_;
+  double c_b_2_;
+  double eps_ = 0.1;
+  double h_a_ = 0.2, h_b_ = 0.4;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// Flocking Behaviour
+//----------------------------------------------------------------------------//
+// Flocking Behaviour                                                         //
+//----------------------------------------------------------------------------//
 ////////////////////////////////////////////////////////////////////////////////
+
 struct Flocking : public Behavior {
   BDM_BEHAVIOR_HEADER(Flocking, Behavior, 1);
 
@@ -208,10 +238,13 @@ class CalculateNeighborData : public Functor<void, Agent*, double> {
   int n;
 };
 
-/////////////////////////////////////////////////////////////////////////////////
-// Flocking2 Behaviour as in
-// https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.121.7027&rep=rep1&type=pdf
 ////////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------//
+// Flocking2 Behaviour                                                        //
+// https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.121.7027&rep=rep1&type=pdf
+//----------------------------------------------------------------------------//
+////////////////////////////////////////////////////////////////////////////////
+
 struct Flocking2 : public Behavior {
   BDM_BEHAVIOR_HEADER(Flocking2, Behavior, 1);
 

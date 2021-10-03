@@ -10,9 +10,6 @@
     "simulation_time_step": 0.01,
     "visualization_interval": 1,
     "export_visualization": true,
-    "unschedule_default_operations": [
-      "mechanical forces"
-    ],
     "visualize_agents": {
       "Boid": [
         "actual_diameter_"
@@ -23,20 +20,22 @@
     "_typename": "bdm::SimParam",
     "n_boids": 200,
     "actual_diameter": 10,
-    "perception_angle_deg": 120,
+    "perception_angle_deg": 180,
     "perception_radius": 75,
+    "obstacle_perception_radius": 100,
     "neighbor_distance": 50,
-    "obstacle_distance": 50,
+    "obstacle_distance": 60,
     "obst_avoid_dist": 200,
-    "max_force": 1.5,
-    "max_speed": 8,
-    "min_speed": 3,
-    "cruising_speed": 4,
+    "max_force": 2,
+    "max_speed": 4,
+    "min_speed": 0,
+    "crusing_speed": 4,
     "cohesion_weight": 1,
     "alignment_weight": 2,
-    "separation_weight": 1.5,
+    "seperation_weight": 1.5,
     "avoid_domain_boundary_weight": 10,
     "obstacle_avoidance_weight": 20,
-    "simulation_steps": 500
+    "simulation_steps": 400,
+    "obstacles_obstruct_view_": true
   }
 }

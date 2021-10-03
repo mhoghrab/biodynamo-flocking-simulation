@@ -4,34 +4,52 @@
 namespace bdm {
 
 ////////////////////////////////////////////////////////////////////////////////
-// Boid Class
+//----------------------------------------------------------------------------//
+// Boid Class                                                                 //
+//----------------------------------------------------------------------------//
 ////////////////////////////////////////////////////////////////////////////////
 
 void Boid::InitializeMembers() {
   const auto* param = Simulation::GetActive()->GetParam();
   const auto* sparam = param->Get<SimParam>();
 
-  actual_diameter_ = sparam->actual_diameter;
-  SetPerceptionRadius(sparam->perception_radius);
-  neighbor_distance_ = sparam->neighbor_distance;
-  obstacle_distance_ = sparam->obstacle_distance;
-  double perception_angle_rad = (sparam->perception_angle_deg / 180) * M_PI;
-  SetPerceptionAngle(perception_angle_rad);
-  max_force_ = sparam->max_force;
-  max_speed_ = sparam->max_speed;
-  cruising_speed_ = sparam->cruising_speed;
-  min_speed_ = sparam->min_speed;
-  cohesion_weight_ = sparam->cohesion_weight;
-  alignment_weight_ = sparam->alignment_weight;
-  separation_weight_ = sparam->separation_weight;
-  avoid_domain_boundary_weight_ = sparam->avoid_domain_boundary_weight;
-  obstacle_avoidance_weight_ = sparam->obstacle_avoidance_weight;
-  obst_avoid_dist_ = sparam->obst_avoid_dist;
-
   SetNewPosition(GetPosition());
   SetNewVelocity(GetVelocity());
 
+  actual_diameter_ = sparam->actual_diameter;
+
+  SetPerceptionRadius(sparam->perception_radius);
+  obstacle_perception_radius_ = sparam->obstacle_perception_radius;
+
+  SetPerceptionAngle((sparam->perception_angle_deg / 180) * M_PI);
+
+  neighbor_distance_ = sparam->neighbor_distance;
+  obst_avoid_dist_ = sparam->obst_avoid_dist;
+  obstacle_distance_ = sparam->obstacle_distance;
+
+  max_force_ = sparam->max_force;
+  min_speed_ = sparam->min_speed;
+  crusing_speed_ = sparam->crusing_speed;
+  max_speed_ = sparam->max_speed;
+
+  cohesion_weight_ = sparam->cohesion_weight;
+  alignment_weight_ = sparam->alignment_weight;
+  seperation_weight_ = sparam->seperation_weight;
+  avoid_domain_boundary_weight_ = sparam->avoid_domain_boundary_weight;
+  obstacle_avoidance_weight_ = sparam->obstacle_avoidance_weight;
+
+  obstacles_obstruct_view_ = sparam->obstacles_obstruct_view;
+
   navig_ = gGeoManager->AddNavigator();
+
+  // Flocking2 constants
+  c_a_1_ = sparam->c_a_1;
+  c_a_2_ = sparam->c_a_1;
+  c_b_1_ = sparam->c_a_1;
+  c_b_1_ = sparam->c_a_1;
+  eps_ = sparam->eps;
+  h_a_ = sparam->h_a;
+  h_b_ = sparam->h_b;
 };
 
 // ---------------------------------------------------------------------------
@@ -130,16 +148,14 @@ bool Boid::CheckIfVisible(Double3 point) {
   Double3 direction_normal = (point - GetPosition()).Normalize();
   double cos_angle = cone_normal * direction_normal;
 
-  // check if obstacle obstructs view to point if obstacles_obstruct_view_ ==
-  // true
-  // bool unobstructed = true;
-  // if (obstacles_obstruct_view_) {
-  //   unobstructed = DirectionIsUnobstructed(point - GetPosition(),
-  //   GetPosition(),
-  //                                          (point - GetPosition()).Norm());
-  // }
+  // check if obstacle obstructs view to point
+  bool is_unobstructed = true;
+  if (obstacles_obstruct_view_) {
+    is_unobstructed = DirectionIsUnobstructed(
+        point - GetPosition(), GetPosition(), (point - GetPosition()).Norm());
+  }
 
-  if (cos_angle >= cos_perception_angle_) {
+  if (is_unobstructed && cos_angle >= cos_perception_angle_) {
     return true;
   } else {
     return false;
@@ -185,7 +201,7 @@ Double3 Boid::SteerTowards(Double3 vector) {
   if (vector.Norm() == 0) {
     return {0, 0, 0};
   }
-  Double3 steer = vector.Normalize() * cruising_speed_ - velocity_;
+  Double3 steer = vector.Normalize() * crusing_speed_ - velocity_;
   return UpperLimit(steer, max_force_);
 }
 
@@ -257,8 +273,6 @@ Double3 Boid::ObstacleAvoidance() {
 
 bool Boid::DirectionIsUnobstructed(Double3 direction, Double3 position,
                                    double distance) {
-  // navig_->SetCurrentPoint(position[0], position[1], position[2]);
-  // navig_->SetCurrentDirection(direction[0], direction[1], direction[2]);
   navig_->InitTrack(position[0], position[1], position[2], direction[0],
                     direction[1], direction[2]);
   navig_->FindNextBoundary(distance);
@@ -403,40 +417,132 @@ const std::vector<Double3> Boid::cone_directions_ = GetConeDirections();
 // Flocking2 Algorithm
 
 Double3 Boid::GetFlocking2Force() {
-  // u_a
   auto* ctxt = Simulation::GetActive()->GetExecutionContext();
   CalculateNeighborData2 NeighborData(this);
   ctxt->ForEachNeighbor(NeighborData, *this, pow(perception_radius_, 2));
-  Double3 u_a = NeighborData.GetU_a();
 
-  // u_y
+  return NeighborData.GetU_a();
+}
+
+Double3 Boid::GetFlocking2ObstacleAvoidanceForce() {
+  Double3 force = {0, 0, 0};
+
+  for (auto sphere : SphereObstacle::sphere_obstacles) {
+    force += GetSphereInteractionTerm(&sphere);
+  }
+
+  for (auto cuboid : CuboidObstacle::cuboid_obstacles) {
+    force += GetCuboidInteractionTerm(&cuboid);
+  }
+
+  return force;
+}
+
+Double3 Boid::GetFlocking2NavigationalFeedbackForce() {
   Double3 target_pos = {3000, 1000, 1000};
   // Double3 target_vel = {0, 0, 0};
   // double c_1 = 1, c_2 = 0;
   // Double3 u_y = (target_pos - GetPosition()) * c_1 + (target_vel -
   // GetVelocity()) * c_2;
-  Double3 u_y = SteerTowards(target_pos - GetPosition());
-
-  return u_a + u_y;
+  return SteerTowards(target_pos - GetPosition()) * 2;
 }
 
-Double3 Boid::GetProjectedPosition(Double3 centre_, double radius_) {
-  double my = radius_ / (GetPosition() - centre_).Norm();
-  Double3 projected_position = GetPosition() * my + centre_ * (1 - my);
+Double3 Boid::GetBoidInteractionTerm(Double3 position, Double3 velocity) {
+  Double3 u_a = {0, 0, 0};
+
+  if (CheckIfVisible(position)) {
+    // add gradient-based term to u_a
+    Double3 n_ij = (position - GetPosition()) /
+                   sqrt(1 + eps_ * pow((position - GetPosition()).Norm(), 2));
+
+    u_a += n_ij * Phi_a(Norm_sig(position - GetPosition())) * c_a_1_;
+
+    // add consensus term
+    double r_a = Norm_sig(perception_radius_);
+    double a_ij = phi_h(Norm_sig(position - GetPosition()) / r_a, h_a_);
+
+    u_a += (velocity - GetVelocity()) * a_ij * c_a_2_;
+  }
+
+  return u_a;
+}
+
+Double3 Boid::GetSphereInteractionTerm(SphereObstacle* sphere) {
+  Double3 u_b = {0, 0, 0};
+  Double3 q_ik = GetProjectedPosition(sphere);
+
+  // test if sphere is in perception_radius_ and boid has not clipped into it
+  if ((GetPosition() - q_ik).Norm() <= obstacle_perception_radius_ &&
+      (GetPosition() - q_ik).Norm() != 0) {
+    // first term
+    Double3 n_ik = (q_ik - GetPosition()) /
+                   sqrt(1 + eps_ * pow((q_ik - GetPosition()).Norm(), 2));
+
+    u_b += n_ik * Phi_b(Norm_sig(q_ik - GetPosition())) * c_b_1_;
+
+    // second term
+    double r_a = Norm_sig(obstacle_distance_);
+    double b_ik = phi_h(Norm_sig(q_ik - GetPosition()) / r_a, h_b_);
+
+    u_b += (GetProjectedVelocity(sphere) - GetVelocity()) * b_ik * c_b_2_;
+  }
+
+  return u_b;
+};  // namespace bdm
+
+Double3 Boid::GetCuboidInteractionTerm(CuboidObstacle* cuboid) {
+  Double3 u_b = {0, 0, 0};
+  Double3 q_ik = GetProjectedPosition(cuboid);
+
+  // test if cuboid is in perception_radius_ and boid has not clipped into it
+  if ((GetPosition() - q_ik).Norm() <= obstacle_perception_radius_ &&
+      (GetPosition() - q_ik).Norm() != 0) {
+    // first term
+    Double3 n_ik = (q_ik - GetPosition()) /
+                   sqrt(1 + eps_ * pow((q_ik - GetPosition()).Norm(), 2));
+
+    u_b += n_ik * Phi_b(Norm_sig(q_ik - GetPosition()));
+
+    // second term
+    double r_a = Norm_sig(obstacle_distance_);
+    double b_ik = phi_h(Norm_sig(q_ik - GetPosition()) / r_a, h_b_);
+    u_b += (GetProjectedVelocity(cuboid) - GetVelocity()) * b_ik;
+  }
+
+  return u_b;
+}
+
+Double3 Boid::GetProjectedPosition(SphereObstacle* sphere) {
+  double my = sphere->radius_ / (GetPosition() - sphere->centre_).Norm();
+  Double3 projected_position = GetPosition() * my + sphere->centre_ * (1 - my);
 
   return projected_position;
 }
 
-Double3 Boid::GetProjectedVelocity(Double3 centre_, double radius_) {
-  double my = radius_ / (GetPosition() - centre_).Norm();
-  Double3 a = (GetPosition() - centre_);
+Double3 Boid::GetProjectedPosition(CuboidObstacle* cuboid) {
+  Double3 projected_position;
+
+  for (int i = 0; i < 3; i++) {
+    if (GetPosition()[i] < (cuboid->lower_bound_)[i])
+      projected_position[i] = (cuboid->lower_bound_)[i];
+    else if (GetPosition()[i] > (cuboid->upper_bound_)[i])
+      projected_position[i] = (cuboid->upper_bound_)[i];
+    else
+      projected_position[i] = GetPosition()[i];
+  }
+
+  return projected_position;
+}
+
+Double3 Boid::GetProjectedVelocity(SphereObstacle* sphere) {
+  double my = sphere->radius_ / (GetPosition() - sphere->centre_).Norm();
+  Double3 a = GetPosition() - sphere->centre_;
   a = a.Normalize();
 
   // Projection Matrix P = I - a*a^t
   Double3 col_1 = {1 - a[1] * a[1], a[2] * a[1], a[3] * a[1]};
   Double3 col_2 = {a[1] * a[2], 1 - a[2] * a[2], a[3] * a[2]};
   Double3 col_3 = {a[1] * a[3], a[2] * a[3], 1 - a[3] * a[3]};
-
   // projected_velocity = my * P * velocity_;
   Double3 projected_velocity =
       (col_1 * velocity_[1] + col_2 * velocity_[2] + col_3 * velocity_[3]) * my;
@@ -444,12 +550,27 @@ Double3 Boid::GetProjectedVelocity(Double3 centre_, double radius_) {
   return projected_velocity;
 }
 
+Double3 Boid::GetProjectedVelocity(CuboidObstacle* cuboid) {
+  Double3 a = GetPosition() - GetProjectedPosition(cuboid);
+  a = a.Normalize();
+
+  // Projection Matrix P = I - a*a^t
+  Double3 col_1 = {1 - a[1] * a[1], a[2] * a[1], a[3] * a[1]};
+  Double3 col_2 = {a[1] * a[2], 1 - a[2] * a[2], a[3] * a[2]};
+  Double3 col_3 = {a[1] * a[3], a[2] * a[3], 1 - a[3] * a[3]};
+  // projected_velocity = my * P * velocity_;
+  Double3 projected_velocity =
+      (col_1 * velocity_[1] + col_2 * velocity_[2] + col_3 * velocity_[3]);
+
+  return projected_velocity;
+}
+
 double Boid::Norm_sig(Double3 z) {
-  return (std::sqrt(1 + eps * pow(z.Norm(), 2)) - 1) / eps;
+  return (std::sqrt(1 + eps_ * pow(z.Norm(), 2)) - 1) / eps_;
 }
 
 double Boid::Norm_sig(double z) {
-  double result = (std::sqrt(1 + eps * z * z) - 1) / eps;
+  double result = (std::sqrt(1 + eps_ * z * z) - 1) / eps_;
   return result;
 }
 
@@ -483,7 +604,7 @@ double Boid::Phi_a(double z) {
   double d_a = Norm_sig(neighbor_distance_);
 
   ////
-  return phi_h(z / r_a, 0.2) * Phi(z - d_a);
+  return phi_h(z / r_a, h_a_) * Phi(z - d_a);
 }
 
 double Boid::Phi_b(double z) {
@@ -492,41 +613,10 @@ double Boid::Phi_b(double z) {
   return phi_h(z / d_b, 0.7) * (sigmoid_1(z - d_b) - 1);
 }
 
-Double3 Boid::GetBoidInteractionTerm(Double3 position, Double3 velocity) {
-  Double3 u_a = {0, 0, 0};
-  if (CheckIfVisible(position)) {
-    // add gradient-based term to u_a
-    Double3 n_ij = (position - GetPosition()) /
-                   sqrt(1 + eps * pow((position - GetPosition()).Norm(), 2));
-    u_a += n_ij * Phi_a(Norm_sig(position - GetPosition()));
-
-    // add consensus term
-    double r_a = Norm_sig(perception_radius_);
-    double a_ij = phi_h(Norm_sig(position - GetPosition()) / r_a, 0.2);
-    u_a += (velocity - GetVelocity()) * a_ij;
-  }
-  return u_a;
-}
-
-Double3 Boid::GetSphereInteractionTerm(Double3 centre_, double radius_) {
-  Double3 u_b = {0, 0, 0};
-  Double3 q_ik = GetProjectedPosition(centre_, radius_);
-
-  // first term
-  Double3 n_ik = (q_ik - GetPosition()) /
-                 sqrt(1 + eps * pow((q_ik - GetPosition()).Norm(), 2));
-  u_b += n_ik * Phi_b(Norm_sig(q_ik - GetPosition()));
-
-  // second term
-  double r_a = Norm_sig(obstacle_distance_);
-  double b_ik = phi_h(Norm_sig(q_ik - GetPosition()) / r_a, 0.9);
-  u_b += (GetProjectedVelocity(centre_, radius_) - GetVelocity()) * b_ik;
-
-  return u_b;
-};
-
 ////////////////////////////////////////////////////////////////////////////////
-// Flocking Behaviour
+//----------------------------------------------------------------------------//
+// Flocking Behaviour                                                         //
+//----------------------------------------------------------------------------//
 ////////////////////////////////////////////////////////////////////////////////
 
 void Flocking::Run(Agent* agent) {
@@ -555,7 +645,7 @@ void Flocking::Run(Agent* agent) {
   // Update acceleration_, new_velocity_, new_position_ of boid
   boid->ResetAcceleration();
 
-  boid->AccelerationAccumulator(seperation_force * boid->separation_weight_);
+  boid->AccelerationAccumulator(seperation_force * boid->seperation_weight_);
   boid->AccelerationAccumulator(cohesion_force * boid->cohesion_weight_);
   // boid->AccelerationAccumulator(social_force * 5);
   boid->AccelerationAccumulator(alignment_force * boid->alignment_weight_);
@@ -628,23 +718,24 @@ Double3 CalculateNeighborData::GetAvgVel() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// Flocking2 Behaviour
+//----------------------------------------------------------------------------//
+// Flocking2 Behaviour                                                        //
+//----------------------------------------------------------------------------//
 ////////////////////////////////////////////////////////////////////////////////
 
 void Flocking2::Run(Agent* agent) {
   auto* boid = dynamic_cast<Boid*>(agent);
 
-  Double3 acceleration = boid->GetFlocking2Force();
-
-  // simple sphere in the centre
-  Double3 centre = {1000, 1000, 1000};
-  double radius = 100;
-  Double3 sphere_avoidance_force =
-      boid->GetSphereInteractionTerm(centre, radius);
+  Double3 flocking2_force = boid->GetFlocking2Force();
+  Double3 flocking2_obstacle_avoidance_force =
+      boid->GetFlocking2ObstacleAvoidanceForce();
+  Double3 flocking2_navigational_feedback_force =
+      boid->GetFlocking2NavigationalFeedbackForce();
 
   boid->ResetAcceleration();
-  boid->AccelerationAccumulator(acceleration);
-  boid->AccelerationAccumulator(sphere_avoidance_force);
+  boid->AccelerationAccumulator(flocking2_force);
+  boid->AccelerationAccumulator(flocking2_obstacle_avoidance_force);
+  boid->AccelerationAccumulator(flocking2_navigational_feedback_force);
 
   boid->UpdateNewVelocity();
   boid->UpdateNewPosition();
@@ -653,10 +744,8 @@ void Flocking2::Run(Agent* agent) {
 void CalculateNeighborData2::operator()(Agent* neighbor,
                                         double squared_distance) {
   auto* neighbor_boid = bdm_static_cast<const Boid*>(neighbor);
-  Double3 neighbor_position = neighbor_boid->GetPosition();
-  Double3 neighbor_velocity = neighbor_boid->GetVelocity();
-
-  u_a += boid_->GetBoidInteractionTerm(neighbor_position, neighbor_velocity);
+  u_a += boid_->GetBoidInteractionTerm(neighbor_boid->GetPosition(),
+                                       neighbor_boid->GetVelocity());
 }
 
 }  // namespace bdm
