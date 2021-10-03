@@ -10,9 +10,6 @@
     "simulation_time_step": 0.01,
     "visualization_interval": 1,
     "export_visualization": true,
-    "unschedule_default_operations": [
-      "mechanical forces"
-    ],
     "visualize_agents": {
       "Boid": [
         "actual_diameter_"
@@ -35,7 +32,7 @@
     "crusing_speed": 4,
     "cohesion_weight": 1,
     "alignment_weight": 2,
-    "separation_weight": 1.5,
+    "seperation_weight": 1.5,
     "avoid_domain_boundary_weight": 10,
     "obstacle_avoidance_weight": 20,
     "simulation_steps": 400,
