@@ -21,11 +21,11 @@ struct SimParam : public ParamGroup {
   double obstacle_distance = 40;
   double max_force = 3;
   double max_speed = 15;
-  double cruising_speed = 12;
+  double crusing_speed = 12;
   double min_speed = 0;
   double cohesion_weight = 1;
   double alignment_weight = 2;
-  double separation_weight = 1.5;
+  double seperation_weight = 1.5;
   double avoid_domain_boundary_weight = 25;
   double obstacle_avoidance_weight = 5;
   uint64_t simulation_steps = 10;
