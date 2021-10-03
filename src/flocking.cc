@@ -12,7 +12,7 @@ const ParamGroupUid SimParam::kUid = ParamGroupUidGenerator::Get()->NewUid();
 
 int Simulate(int argc, const char** argv) {
   Param::RegisterParamGroup(new SimParam());
-  auto set_param = [&](Param* param) { param->statistics = true; };
+  auto set_param = [&](Param* param) {};
   Simulation simulation(argc, argv, set_param);
   auto* rm = simulation.GetResourceManager();
   auto* random = simulation.GetRandom();
@@ -33,8 +33,8 @@ int Simulate(int argc, const char** argv) {
 
   for (size_t i = 0; i < n_boids; ++i) {
     x_coord = random->Uniform(100, 300);
-    y_coord = random->Uniform(900, 1100);
-    z_coord = random->Uniform(900, 1100);
+    y_coord = random->Uniform(850, 1150);
+    z_coord = random->Uniform(850, 1150);
     // x_coord = random->Uniform(param->min_bound, param->max_bound);
     // y_coord = random->Uniform(param->min_bound, param->max_bound);
     // z_coord = random->Uniform(param->min_bound, param->max_bound);

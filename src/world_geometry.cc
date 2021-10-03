@@ -75,8 +75,8 @@ void InitializeRootGeometry() {
     TGeoTranslation *translation = new TGeoTranslation(
         (sphere.centre_)[0], (sphere.centre_)[1], (sphere.centre_)[2]);
 
-    TGeoVolume *sphere_root =
-        gGeoManager->MakeSphere("sphere", med, sphere.radius_, 0, 180, 0, 180);
+    TGeoVolume *sphere_root = gGeoManager->MakeSphere(
+        "sphere", med, 0, sphere.radius_, 0, 180, 0, 180);
 
     top->AddNode(sphere_root, 1, translation);
   }
@@ -109,7 +109,7 @@ SphereObstacle::SphereObstacle(Double3 centre, double radius) {
 std::vector<SphereObstacle> SphereObstacle::sphere_obstacles;
 
 void CreateSphereObstacles() {
-  auto sphere_0 = new SphereObstacle({1000, 1000, 1000}, 100);
+  auto sphere_0 = new SphereObstacle({1400, 1000, 1000}, 100);
   SphereObstacle::sphere_obstacles.push_back(*sphere_0);
 }
 

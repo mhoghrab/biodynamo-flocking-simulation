@@ -30,6 +30,15 @@ struct SimParam : public ParamGroup {
   double obstacle_avoidance_weight = 5;
   uint64_t simulation_steps = 10;
   bool obstacles_obstruct_view = true;
+
+  // Flocking 2 Algorithm
+  double c_a_1 = 1;
+  double c_a_2 = 2 * sqrt(c_a_1);
+  double c_b_1 = 4;
+  double c_b_2 = 2 * sqrt(c_b_1);
+  double eps = 0.1;
+  double h_a = 0.2;
+  double h_b = 0.9;
 };
 
 }  // namespace bdm

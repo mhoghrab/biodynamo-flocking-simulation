@@ -23,3 +23,7 @@ projection stuff when inside obstacel
 
 
 InitializeMembers sortieren
+
+boid concst static machen
+
+sphere projected pos?

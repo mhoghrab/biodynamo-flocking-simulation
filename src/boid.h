@@ -11,8 +11,11 @@
 namespace bdm {
 
 ////////////////////////////////////////////////////////////////////////////////
-// Boid Class
+//----------------------------------------------------------------------------//
+// Boid Class                                                                 //
+//----------------------------------------------------------------------------//
 ////////////////////////////////////////////////////////////////////////////////
+
 class Boid : public Cell {
   BDM_AGENT_HEADER(Boid, Cell, 1);
 
@@ -126,6 +129,8 @@ class Boid : public Cell {
   // terms; returns a force to avoid them and keep the desired distance
   Double3 GetFlocking2ObstacleAvoidanceForce();
 
+  Double3 GetFlocking2NavigationalFeedbackForce();
+
   // returns the interaction force for a given boid
   Double3 GetBoidInteractionTerm(Double3 position, Double3 velocity);
 
@@ -162,8 +167,6 @@ class Boid : public Cell {
 
   double Phi_b(double z);
 
-  double eps = 0.1;
-  double h_a = 0.2, h_b = 0.9;
   // ---------------------------------------------------------------------------
   Double3 new_position_, new_velocity_;
   Double3 acceleration_, velocity_, heading_direction_;
@@ -179,11 +182,22 @@ class Boid : public Cell {
   static const std::vector<Double3> cone_directions_;
 
   TGeoNavigator* navig_;
+
+  // Flocking2 constants
+  double c_a_1_;
+  double c_a_2_;
+  double c_b_1_;
+  double c_b_2_;
+  double eps_ = 0.1;
+  double h_a_ = 0.2, h_b_ = 0.4;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// Flocking Behaviour
+//----------------------------------------------------------------------------//
+// Flocking Behaviour                                                         //
+//----------------------------------------------------------------------------//
 ////////////////////////////////////////////////////////////////////////////////
+
 struct Flocking : public Behavior {
   BDM_BEHAVIOR_HEADER(Flocking, Behavior, 1);
 
@@ -224,10 +238,13 @@ class CalculateNeighborData : public Functor<void, Agent*, double> {
   int n;
 };
 
-/////////////////////////////////////////////////////////////////////////////////
-// Flocking2 Behaviour as in
-// https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.121.7027&rep=rep1&type=pdf
 ////////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------//
+// Flocking2 Behaviour                                                        //
+// https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.121.7027&rep=rep1&type=pdf
+//----------------------------------------------------------------------------//
+////////////////////////////////////////////////////////////////////////////////
+
 struct Flocking2 : public Behavior {
   BDM_BEHAVIOR_HEADER(Flocking2, Behavior, 1);
 
