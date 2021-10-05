@@ -188,6 +188,7 @@ class Boid : public Cell {
   double c_a_2_;
   double c_b_1_;
   double c_b_2_;
+  double c_y_;
   double eps_ = 0.1;
   double h_a_ = 0.2, h_b_ = 0.4;
 };

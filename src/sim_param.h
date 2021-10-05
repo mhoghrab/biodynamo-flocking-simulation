@@ -32,10 +32,11 @@ struct SimParam : public ParamGroup {
   bool obstacles_obstruct_view = true;
 
   // Flocking 2 Algorithm
-  double c_a_1 = 1;
+  double c_a_1 = 0.075;
   double c_a_2 = 2 * sqrt(c_a_1);
-  double c_b_1 = 3;
+  double c_b_1 = 0.15;
   double c_b_2 = 2 * sqrt(c_b_1);
+  double c_y = 1;
   double eps = 0.1;
   double h_a = 0.2;
   double h_b = 0.5;

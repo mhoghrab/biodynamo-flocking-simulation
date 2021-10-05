@@ -109,7 +109,7 @@ SphereObstacle::SphereObstacle(Double3 centre, double radius) {
 std::vector<SphereObstacle> SphereObstacle::sphere_obstacles;
 
 void CreateSphereObstacles() {
-  auto sphere_0 = new SphereObstacle({1000, 1000, 1000}, 200);
+  auto sphere_0 = new SphereObstacle({1000, 1000, 1000}, 100);
   SphereObstacle::sphere_obstacles.push_back(*sphere_0);
 }
 

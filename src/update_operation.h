@@ -16,7 +16,12 @@ struct UpdateOp : public StandaloneOperationImpl {
 
     rm->ForEachAgent([](Agent* agent) {
       auto* boid = dynamic_cast<Boid*>(agent);
+
+      boid->UpdateNewVelocity();
+      boid->UpdateNewPosition();
       boid->UpdateData();
+
+      boid->ResetAcceleration();
     });
   }
 };

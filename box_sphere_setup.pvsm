@@ -4284,7 +4284,7 @@
     </Proxy>
     <Proxy group="sources" type="SphereSource" id="11439" servers="1">
       <Property name="Center" id="11439.Center" number_of_elements="3">
-        <Element index="0" value="1400"/>
+        <Element index="0" value="1000"/>
         <Element index="1" value="1000"/>
         <Element index="2" value="1000"/>
         <Domain name="range" id="11439.Center.range"/>

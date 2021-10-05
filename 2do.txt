@@ -30,4 +30,6 @@ sphere projected pos?
 
 fix GetCuboidInteractionTerm
 
-obstacle in vire cone?
+obstacle in view cone?
+
+GetFlocking2NavigationalFeedbackForce
