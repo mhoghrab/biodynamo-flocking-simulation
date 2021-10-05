@@ -53,6 +53,27 @@ void Boid::InitializeMembers() {
 };
 
 // ---------------------------------------------------------------------------
+// Define necessary virtual functions of Base class
+
+Shape Boid::GetShape() const { return Shape::kSphere; }
+
+Double3 Boid::CalculateDisplacement(const InteractionForce* force,
+                                    double squared_radius, double dt) {
+  Double3 zero = {0, 0, 0};
+  return zero;
+};
+
+void Boid::ApplyDisplacement(const Double3& displacement) { ; };
+
+const Double3& Boid::GetPosition() const { return position_; };
+
+void Boid::SetPosition(const Double3& pos) { position_ = pos; };
+
+double Boid::GetDiameter() const { return diameter_; };
+
+void Boid::SetDiameter(double diameter) { diameter_ = diameter; };
+
+// ---------------------------------------------------------------------------
 // Various Getter and Setter
 
 Double3 Boid::GetVelocity() const { return velocity_; }
