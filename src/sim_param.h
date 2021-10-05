@@ -11,14 +11,14 @@ namespace bdm {
 struct SimParam : public ParamGroup {
   BDM_PARAM_GROUP_HEADER(SimParam, 1);
 
-  size_t n_boids = 1000;
+  size_t n_boids = 100;
   double actual_diameter = 15;
   double perception_radius = 300;
   double obstacle_perception_radius = 150;
   double perception_angle_deg = 120;
   double obst_avoid_dist = 150;
   double neighbor_distance = 10;
-  double obstacle_distance = 40;
+  double obstacle_distance = 80;
   double max_force = 3;
   double max_speed = 15;
   double crusing_speed = 12;
@@ -34,11 +34,14 @@ struct SimParam : public ParamGroup {
   // Flocking 2 Algorithm
   double c_a_1 = 1;
   double c_a_2 = 2 * sqrt(c_a_1);
-  double c_b_1 = 4;
+  double c_b_1 = 3;
   double c_b_2 = 2 * sqrt(c_b_1);
   double eps = 0.1;
   double h_a = 0.2;
-  double h_b = 0.9;
+  double h_b = 0.5;
+
+  //
+  double d_t = 0.1;
 };
 
 }  // namespace bdm

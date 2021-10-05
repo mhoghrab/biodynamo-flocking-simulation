@@ -23,8 +23,27 @@ int Simulate(int argc, const char** argv) {
   // Initializing the wold geometry / obstacles
   // CreateRootObstacles();
   CreateSphereObstacles();
-  CreateCuboidObstacles();
+  // CreateCuboidObstacles();
   InitializeRootGeometry();
+
+  /////////////////////////////////////////////
+  // size_t n_spheres = 20;
+  // double x_min = 500, x_max = 1500;
+
+  // double max_bound = param->max_bound;
+  // double min_bound = param->min_bound;
+
+  // for (size_t i = 0; i < n_spheres; i++) {
+  //   Double3 centre = {random->Uniform(x_min, x_max),
+  //                     random->Uniform(min_bound, max_bound),
+  //                     random->Uniform(min_bound, max_bound)};
+  //   double radius = random->Uniform(10, 100);
+
+  //   auto sphere_0 = new SphereObstacle(centre, radius);
+  //   SphereObstacle::sphere_obstacles.push_back(*sphere_0);
+  // }
+  // InitializeRootGeometry();
+  /////////////////////////////////////////////
 
   // spawning boids
   size_t n_boids = sparam->n_boids;

@@ -27,3 +27,7 @@ InitializeMembers sortieren
 boid concst static machen
 
 sphere projected pos?
+
+fix GetCuboidInteractionTerm
+
+obstacle in vire cone?
