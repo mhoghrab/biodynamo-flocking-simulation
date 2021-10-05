@@ -491,8 +491,10 @@ Double3 Boid::GetSphereInteractionTerm(SphereObstacle* sphere) {
   Double3 q_ik = GetProjectedPosition(sphere);
 
   // test if sphere is in perception_radius_ and boid has not clipped into it
+  // and is not heading away from projected position
   if ((GetPosition() - q_ik).Norm() <= obstacle_perception_radius_ &&
-      (GetPosition() - sphere->centre_).Norm() >= sphere->radius_) {
+      (GetPosition() - sphere->centre_).Norm() >= sphere->radius_ &&
+      IsHeadingTowards(q_ik)) {
     // first term
     Double3 n_ik = (q_ik - GetPosition()) /
                    sqrt(1 + eps_ * pow((q_ik - GetPosition()).Norm(), 2));
@@ -512,8 +514,9 @@ Double3 Boid::GetCuboidInteractionTerm(CuboidObstacle* cuboid) {
   Double3 q_ik = GetProjectedPosition(cuboid);
 
   // test if cuboid is in perception_radius_ and boid has not clipped into it
+  // and is not heading away from projected position
   if ((GetPosition() - q_ik).Norm() <= obstacle_perception_radius_ &&
-      (GetPosition() - q_ik).Norm() != 0) {
+      (GetPosition() - q_ik).Norm() != 0 && IsHeadingTowards(q_ik)) {
     // first term
     Double3 n_ik = (q_ik - GetPosition()) /
                    sqrt(1 + eps_ * pow((q_ik - GetPosition()).Norm(), 2));
@@ -569,6 +572,10 @@ Double3 Boid::GetProjectedVelocity(CuboidObstacle* cuboid) {
   Double3 projected_velocity = (velocity_ - projected_normal);
 
   return projected_velocity;
+}
+
+bool Boid::IsHeadingTowards(Double3 point) {
+  return (((GetPosition() - point) * velocity_) < 0);
 }
 
 double Boid::Norm_sig(Double3 z) {

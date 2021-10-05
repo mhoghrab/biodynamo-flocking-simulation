@@ -23,7 +23,7 @@ int Simulate(int argc, const char** argv) {
   // Initializing the wold geometry / obstacles
   // CreateRootObstacles();
   CreateSphereObstacles();
-  // CreateCuboidObstacles();
+  CreateCuboidObstacles();
   InitializeRootGeometry();
 
   /////////////////////////////////////////////

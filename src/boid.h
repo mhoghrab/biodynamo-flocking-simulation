@@ -150,6 +150,8 @@ class Boid : public Cell {
 
   Double3 GetProjectedVelocity(CuboidObstacle* cuboid);
 
+  bool IsHeadingTowards(Double3 point);
+
   // functions needed to calculate the interaction terms
   double Norm_sig(Double3 z);
 
