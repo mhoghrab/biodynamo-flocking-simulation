@@ -471,8 +471,11 @@ Double3 Boid::GetBoidInteractionTerm(Double3 position, Double3 velocity) {
 
   if (CheckIfVisible(position)) {
     // add gradient-based term to u_a
-    Double3 n_ij = (position - GetPosition()) /
-                   sqrt(1 + eps_ * pow((position - GetPosition()).Norm(), 2));
+    // Double3 n_ij = (position - GetPosition()) /
+    //                sqrt(1 + eps_ * pow((position - GetPosition()).Norm(),
+    //                2));
+    Double3 n_ij = (position - GetPosition());
+    n_ij = n_ij.Normalize();
 
     u_a += n_ij * Phi_a(Norm_sig(position - GetPosition())) * c_a_1_;
 
@@ -495,11 +498,16 @@ Double3 Boid::GetSphereInteractionTerm(SphereObstacle* sphere) {
   if ((GetPosition() - q_ik).Norm() <= obstacle_perception_radius_ &&
       (GetPosition() - sphere->centre_).Norm() >= sphere->radius_ &&
       IsHeadingTowards(q_ik)) {
+    // ---------------------------------------------------------------------------
     // first term
-    Double3 n_ik = (q_ik - GetPosition()) /
-                   sqrt(1 + eps_ * pow((q_ik - GetPosition()).Norm(), 2));
+    // Double3 n_ik = (q_ik - GetPosition()) /
+    //                sqrt(1 + eps_ * pow((q_ik - GetPosition()).Norm(), 2));
+    Double3 n_ik = (q_ik - GetPosition());
+    n_ik = n_ik.Normalize();
+
     u_b += n_ik * Phi_b(Norm_sig(q_ik - GetPosition())) * c_b_1_;
 
+    // ---------------------------------------------------------------------------
     // second term
     double r_a = Norm_sig(obstacle_distance_ * 3);
     double b_ik = phi_h(Norm_sig(q_ik - GetPosition()) / r_a, h_b_);
@@ -517,14 +525,20 @@ Double3 Boid::GetCuboidInteractionTerm(CuboidObstacle* cuboid) {
   // and is not heading away from projected position
   if ((GetPosition() - q_ik).Norm() <= obstacle_perception_radius_ &&
       (GetPosition() - q_ik).Norm() != 0 && IsHeadingTowards(q_ik)) {
+    // ---------------------------------------------------------------------------
     // first term
-    Double3 n_ik = (q_ik - GetPosition()) /
-                   sqrt(1 + eps_ * pow((q_ik - GetPosition()).Norm(), 2));
+    // Double3 n_ik = (q_ik - GetPosition()) /
+    //                sqrt(1 + eps_ * pow((q_ik - GetPosition()).Norm(), 2));
+    Double3 n_ik = (q_ik - GetPosition());
+    n_ik = n_ik.Normalize();
+
     u_b += n_ik * Phi_b(Norm_sig(q_ik - GetPosition())) * c_b_1_;
 
+    // ---------------------------------------------------------------------------
     // second term
-    double r_a = Norm_sig(obstacle_distance_);
-    double b_ik = phi_h(Norm_sig(q_ik - GetPosition()) / r_a, h_b_);
+    double b_ik = phi_h(
+        Norm_sig(q_ik - GetPosition()) / Norm_sig(obstacle_distance_), h_b_);
+
     u_b += (GetProjectedVelocity(cuboid) - GetVelocity()) * b_ik * c_b_2_;
   }
 
@@ -601,7 +615,8 @@ double Boid::phi_h(double z, double h) {
     return 1;
   }
   if (z >= h && z <= 1) {
-    return (1 + cos(M_PI * (z - h) / (1 - h))) / 2;
+    double scale = exp((-20 * (z - h) * (z - h)) / 2);
+    return scale * (1 + cos(M_PI * (z - h) / (1 - h))) / 2;
   }
   return 0;
 }
@@ -749,7 +764,7 @@ void Flocking2::Run(Agent* agent) {
   boid->ResetAcceleration();
   boid->AccelerationAccumulator(flocking2_obstacle_avoidance_force);
   boid->AccelerationAccumulator(flocking2_force);
-  boid->AccelerationAccumulator(flocking2_navigational_feedback_force);
+  // boid->AccelerationAccumulator(flocking2_navigational_feedback_force);
 
   // boid->UpdateNewVelocity();
   // boid->UpdateNewPosition();
