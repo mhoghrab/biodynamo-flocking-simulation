@@ -2,7 +2,6 @@
 #define BOID_H_
 
 #include "TGeoManager.h"
-#include "core/agent/cell.h"
 #include "core/behavior/behavior.h"
 #include "core/container/math_array.h"
 #include "core/functor.h"
@@ -32,16 +31,41 @@ std::vector<Double3> TransformDirections(std::vector<Double3> directions,
 //----------------------------------------------------------------------------//
 ////////////////////////////////////////////////////////////////////////////////
 
-class Boid : public Cell {
-  BDM_AGENT_HEADER(Boid, Cell, 1);
+class Boid : public Agent {
+  BDM_AGENT_HEADER(Boid, Agent, 1);
+
+ private:
+  Double3 position_;
+  double diameter_;
 
  public:
   Boid() {}
-  explicit Boid(const Double3& position) : Base(position) {}
+  explicit Boid(const Double3& position)
+      : position_(position), diameter_(1.0) {}
   virtual ~Boid() {}
 
   // Initializes Boid parameters with given SimParam
   void InitializeMembers();
+
+  // ---------------------------------------------------------------------------
+  // Define necessary virtual functions of Base class. Those functions are
+  // called from BioDynaMo's main engine but we don't need that here. Thus,
+  // the function return zero or are defined as an empty call.
+
+  Shape GetShape() const override;
+
+  Double3 CalculateDisplacement(const InteractionForce* force,
+                                double squared_radius, double dt) override;
+
+  void ApplyDisplacement(const Double3& displacement) override;
+
+  const Double3& GetPosition() const override;
+
+  void SetPosition(const Double3& pos) override;
+
+  double GetDiameter() const override;
+
+  void SetDiameter(double diameter) override;
 
   // ---------------------------------------------------------------------------
   // Important Setter that have to update other variables as well

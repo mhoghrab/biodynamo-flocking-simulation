@@ -2,7 +2,7 @@
   "bdm::Param": {
     "remove_output_dir_contents": true,
     "compute_target": "cuda",
-    "statistics": false,
+    "statistics": true,
     "bound_space": true,
     "max_bound": 2000,
     "min_bound": 0,
