@@ -10,6 +10,22 @@
 
 namespace bdm {
 
+// ---------------------------------------------------------------------------
+// Double3 Methods
+
+Double3 UpperLimit(Double3 vector, double upper_limit);
+
+Double3 LowerLimit(Double3 vector, double lower_limit);
+
+Double3 ClampUpperLower(Double3 vector, double upper_limit, double lower_limit);
+
+Double3 Normalized(Double3 vector);
+
+// rotates ref_A onto ref_B and applies same rotaion onto all vectors in
+// directions and returns a new vector
+std::vector<Double3> TransformDirections(std::vector<Double3> directions,
+                                         Double3 ref_A, Double3 ref_B);
+
 ////////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------//
 // Boid Class                                                                 //
@@ -28,39 +44,18 @@ class Boid : public Cell {
   void InitializeMembers();
 
   // ---------------------------------------------------------------------------
-  // Various Getter and Setter
+  // Important Setter that have to update other variables as well
 
   Double3 GetVelocity() const;
   void SetVelocity(Double3 velocity);
 
-  Double3 GetAcceleration() const;
-  void SetAcceleration(Double3 acceleration);
-
-  void SetHeadingDirection(Double3 dir);
-
-  Double3 GetNewPosition() const;
   void SetNewPosition(Double3 position);
 
-  Double3 GetNewVelocity() const;
   void SetNewVelocity(Double3 velocity);
 
-  double GetActualDiameter() const;
-  void SetActualDiameter(double actual_diameter);
-
-  double GetPerceptionRadius() const;
-  void SetPerceptionRadius(double perception_radius);
+  void SetBoidPerceptionRadius(double perception_radius);
 
   void SetPerceptionAngle(double angle);
-
-  // ---------------------------------------------------------------------------
-  // Double3 Methods
-
-  Double3 UpperLimit(Double3 vector, double upper_limit);
-
-  Double3 LowerLimit(Double3 vector, double lower_limit);
-
-  Double3 ClampUpperLower(Double3 vector, double upper_limit,
-                          double lower_limit);
 
   // ---------------------------------------------------------------------------
 
@@ -72,7 +67,7 @@ class Boid : public Cell {
   Double3 AvoidDomainBoundary();
 
   // Returns a Steering-Force in order to steer velocity towards
-  // (vector.Normalize() * crusing_speed_)
+  // (Normalized(vector) * crusing_speed_)
   // Force is limited by max_force_
   Double3 SteerTowards(Double3 vector);
 
@@ -113,11 +108,6 @@ class Boid : public Cell {
   // the furthest away obstacle
   Double3 GetUnobstructedDirection();
 
-  // rotates ref_A onto ref_B and applies same rotaion onto all vectors in
-  // directions and returns a new vector
-  std::vector<Double3> TransformDirections(std::vector<Double3> directions,
-                                           Double3 ref_A, Double3 ref_B);
-
   // ---------------------------------------------------------------------------
   // Flocking2 Algorithm
 
@@ -131,8 +121,10 @@ class Boid : public Cell {
 
   Double3 GetFlocking2NavigationalFeedbackForce();
 
+  Double3 GetFlocking2CentreTerm(Double3 centre_of_mass);
+
   // returns the interaction force for a given boid
-  Double3 GetBoidInteractionTerm(Double3 position, Double3 velocity);
+  Double3 GetBoidInteractionTerm(const Boid* boid);
 
   // returns the interaction force for a given sphere
   Double3 GetSphereInteractionTerm(SphereObstacle* sphere);
@@ -140,8 +132,8 @@ class Boid : public Cell {
   // returns the interaction force for a given cuboid
   Double3 GetCuboidInteractionTerm(CuboidObstacle* cuboid);
 
-  // funcions to project the boids position / velocity onto a obstacel sphere or
-  // cuboid
+  // funcions to project the boids position / velocity onto a obstacele sphere
+  // or cuboid
   Double3 GetProjectedPosition(SphereObstacle* sphere);
 
   Double3 GetProjectedPosition(CuboidObstacle* cuboid);
@@ -161,6 +153,10 @@ class Boid : public Cell {
 
   double phi_h(double z, double h);
 
+  double phi_h_a(double z, double h);
+
+  double phi_h_inv(double z, double h);
+
   double sigmoid_1(double z);
 
   double sigmoid_2(double z);
@@ -173,7 +169,8 @@ class Boid : public Cell {
   Double3 new_position_, new_velocity_;
   Double3 acceleration_, velocity_, heading_direction_;
   double actual_diameter_;
-  double perception_radius_, obstacle_perception_radius_;
+  double boid_perception_radius_, boid_interaction_radius_,
+      obstacle_perception_radius_;
   double perception_angle_, cos_perception_angle_;
   double neighbor_distance_, obst_avoid_dist_, obstacle_distance_;
   double max_force_, min_speed_, crusing_speed_, max_speed_;
@@ -181,7 +178,6 @@ class Boid : public Cell {
       avoid_domain_boundary_weight_, obstacle_avoidance_weight_;
   bool obstacles_obstruct_view_ = true;
   static const std::vector<Double3> directions_;
-  static const std::vector<Double3> cone_directions_;
 
   TGeoNavigator* navig_;
 
@@ -223,7 +219,7 @@ class CalculateNeighborData : public Functor<void, Agent*, double> {
 
   void operator()(Agent* neighbor, double squared_distance) override;
 
-  Double3 GetCenterOfMassDir();
+  Double3 GetCentreOfMassDir();
 
   Double3 GetSeperationDir();
 
@@ -244,7 +240,6 @@ class CalculateNeighborData : public Functor<void, Agent*, double> {
 ////////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------//
 // Flocking2 Behaviour                                                        //
-// https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.121.7027&rep=rep1&type=pdf
 //----------------------------------------------------------------------------//
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -265,8 +260,11 @@ class CalculateNeighborData2 : public Functor<void, Agent*, double> {
 
   Double3 GetU_a() { return u_a; };
 
+  Double3 GetCentreOfMass();
+
   Boid* boid_;
-  Double3 u_a = {0, 0, 0};
+  Double3 u_a = {0, 0, 0}, sum_pos = {0, 0, 0};
+  int n = 0;
 };
 
 }  // namespace bdm

@@ -29,26 +29,29 @@ int Simulate(int argc, const char** argv) {
   // spawning boids
   size_t n_boids = sparam->n_boids;
   double x_coord, y_coord, z_coord;
-  double x_vel, y_vel, z_vel;
+  double x_vel = 0, y_vel = 0, z_vel = 0;
 
   for (size_t i = 0; i < n_boids; ++i) {
     x_coord = random->Uniform(100, 300);
     y_coord = random->Uniform(850, 1150);
     z_coord = random->Uniform(850, 1150);
+    // x_coord = 100;
+    // y_coord = 1000;
+    // z_coord = 1000;
     // x_coord = random->Uniform(param->min_bound, param->max_bound);
     // y_coord = random->Uniform(param->min_bound, param->max_bound);
     // z_coord = random->Uniform(param->min_bound, param->max_bound);
 
-    int vel_bound = 2;
-    // x_vel = 10;
+    // int vel_bound = 2;
+    x_vel = 4;
     // y_vel = random->Uniform(-vel_bound, vel_bound);
     // z_vel = random->Uniform(-vel_bound, vel_bound);
 
     auto* boid = new Boid({x_coord, y_coord, z_coord});
     boid->SetVelocity({x_vel, y_vel, z_vel});
+
     boid->InitializeMembers();
     boid->AddBehavior(new Flocking2());
-
     rm->AddAgent(boid);
   }
 
