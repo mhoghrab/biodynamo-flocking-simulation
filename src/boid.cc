@@ -461,7 +461,7 @@ Double3 Boid::GetFlocking2Force() {
 
   Double3 force = {0, 0, 0};
   force += NeighborData.GetU_a();
-  // force += GetFlocking2CentreTerm(NeighborData.GetCentreOfMass());
+  force += GetFlocking2CentreTerm(NeighborData.GetCentreOfMass());
 
   return force;
 }
@@ -496,7 +496,7 @@ Double3 Boid::GetFlocking2CentreTerm(Double3 centre_of_mass) {
   double h = boid_interaction_radius_ / max_effect_dist;
   double scale = phi_h_inv(
       Norm_sig(centre_of_mass - GetPosition()) / Norm_sig(max_effect_dist), h);
-  return Normalized(centre_of_mass - GetPosition()) * scale * 0.1;
+  return Normalized(centre_of_mass - GetPosition()) * scale * 0.3;
 }
 
 Double3 Boid::GetBoidInteractionTerm(const Boid* boid) {
@@ -504,9 +504,9 @@ Double3 Boid::GetBoidInteractionTerm(const Boid* boid) {
 
   if (CheckIfVisible(boid->GetPosition())) {
     // add gradient-based term to u_a
-    // Double3 n_ij = (position - GetPosition()) /
-    //                sqrt(1 + eps_ * pow((position - GetPosition()).Norm(),
-    //                2));
+    // double temp = (boid->GetPosition() - GetPosition()).Norm();
+    // Double3 temp2 = (boid->GetPosition() - GetPosition());
+    // Double3 n_ij = temp2 / sqrt(1 + eps_ * pow(temp, 2));
     Double3 n_ij = Normalized(boid->GetPosition() - GetPosition());
 
     u_a += n_ij * Phi_a(Norm_sig(boid->GetPosition() - GetPosition())) * c_a_1_;
@@ -532,7 +532,7 @@ Double3 Boid::GetSphereInteractionTerm(SphereObstacle* sphere) {
       (GetPosition() - sphere->centre_).Norm() >= sphere->radius_ &&
       IsHeadingTowards(q_ik)) {
     // ---------------------------------------------------------------------------
-    // first term
+    // distance term
     // Double3 n_ik = (q_ik - GetPosition()) /
     //                sqrt(1 + eps_ * pow((q_ik - GetPosition()).Norm(), 2));
     Double3 n_ik = Normalized(q_ik - GetPosition());
@@ -540,9 +540,9 @@ Double3 Boid::GetSphereInteractionTerm(SphereObstacle* sphere) {
     u_b += n_ik * Phi_b(Norm_sig(q_ik - GetPosition())) * c_b_1_;
 
     // ---------------------------------------------------------------------------
-    // second term
+    // velocity term
     double b_ik = phi_h(
-        Norm_sig(q_ik - GetPosition()) / Norm_sig(obstacle_distance_), h_b_);
+        Norm_sig(q_ik - GetPosition()) / Norm_sig(2 * obstacle_distance_), 0.1);
     u_b += (GetProjectedVelocity(sphere) - GetVelocity()) * b_ik * c_b_2_;
   }
 
@@ -558,7 +558,7 @@ Double3 Boid::GetCuboidInteractionTerm(CuboidObstacle* cuboid) {
   if ((GetPosition() - q_ik).Norm() <= obstacle_perception_radius_ &&
       (GetPosition() - q_ik).Norm() != 0 && IsHeadingTowards(q_ik)) {
     // ---------------------------------------------------------------------------
-    // first term
+    // distance term
     // Double3 n_ik = (q_ik - GetPosition()) /
     //                sqrt(1 + eps_ * pow((q_ik - GetPosition()).Norm(), 2));
     Double3 n_ik = Normalized(q_ik - GetPosition());
@@ -566,7 +566,7 @@ Double3 Boid::GetCuboidInteractionTerm(CuboidObstacle* cuboid) {
     u_b += n_ik * Phi_b(Norm_sig(q_ik - GetPosition())) * c_b_1_;
 
     // ---------------------------------------------------------------------------
-    // second term
+    // velocity term
     double b_ik = phi_h(
         Norm_sig(q_ik - GetPosition()) / Norm_sig(obstacle_distance_), h_b_);
 
@@ -577,10 +577,16 @@ Double3 Boid::GetCuboidInteractionTerm(CuboidObstacle* cuboid) {
 }
 
 Double3 Boid::GetProjectedPosition(SphereObstacle* sphere) {
-  double my = sphere->radius_ / (GetPosition() - sphere->centre_).Norm();
-  Double3 projected_position = GetPosition() * my + sphere->centre_ * (1 - my);
+  double dist = (GetPosition() - sphere->centre_).Norm();
 
-  return projected_position;
+  if (dist > sphere->radius_) {
+    // outside of sphere
+    double my = sphere->radius_ / dist;
+    return GetPosition() * my + sphere->centre_ * (1 - my);
+  } else {
+    // inside of sphere
+    return GetPosition();
+  }
 }
 
 Double3 Boid::GetProjectedPosition(CuboidObstacle* cuboid) {
@@ -635,8 +641,8 @@ double Boid::Norm_sig(double z) {
 double Boid::Phi(double z) {
   // 0 < a <= b
   // "a" controls a max for attaction scaling, "b" min for repelling
-  double a = 2;
-  double b = 5;
+  double a = 1;
+  double b = 2.5;
   double c = std::abs(a - b) / std::sqrt(4 * a * b);
   return ((a + b) * sigmoid_2(z + c) + (a - b)) / 2;
 }
@@ -656,7 +662,7 @@ double Boid::phi_h_a(double z, double h) {
     return 1;
   }
   if (z >= h && z <= 1) {
-    double scale = exp((-20 * (z - h) * (z - h)) / 2);
+    double scale = exp((-5 * (z - h) * (z - h)));
     return scale * (1 + cos(M_PI * (z - h) / (1 - h))) / 2;
   }
   return 0;
@@ -677,8 +683,6 @@ double Boid::sigmoid_1(double z) { return z / std::sqrt(1 + z * z); }
 double Boid::sigmoid_2(double z) { return z / (1 + std::abs(z)); }
 
 double Boid::Phi_a(double z) {
-  // r_a and d_a sometimes get initialzied as nan, so as a temp fix always
-  // calculate them new when used
   double r_a = Norm_sig(boid_interaction_radius_);
   double d_a = Norm_sig(neighbor_distance_);
 
@@ -799,7 +803,7 @@ Double3 CalculateNeighborData::GetAvgVel() {
 
 ////////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------//
-// Flocking2 Behaviour //
+// Flocking2 Behaviour                                                        //
 //----------------------------------------------------------------------------//
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -821,6 +825,18 @@ void Flocking2::Run(Agent* agent) {
   // boid->UpdateNewPosition();
 }
 
+void FreeFlocking::Run(Agent* agent) {
+  auto* boid = dynamic_cast<Boid*>(agent);
+
+  Double3 flocking2_force = boid->GetFlocking2Force();
+  // Double3 flocking2_navigational_feedback_force =
+  // boid->GetFlocking2NavigationalFeedbackForce();
+
+  boid->ResetAcceleration();
+  boid->AccelerationAccumulator(flocking2_force);
+  // boid->AccelerationAccumulator(flocking2_navigational_feedback_force);
+}
+
 void CalculateNeighborData2::operator()(Agent* neighbor,
                                         double squared_distance) {
   auto* neighbor_boid = bdm_static_cast<const Boid*>(neighbor);
@@ -830,7 +846,10 @@ void CalculateNeighborData2::operator()(Agent* neighbor,
     u_a += boid_->GetBoidInteractionTerm(neighbor_boid);
   }
 
-  if (boid_->CheckIfVisible(neighbor_boid->GetPosition())) {
+  // For getting the avarage position for all visible boids within
+  // boid_perception_radius_
+  if (dist <= boid_->boid_perception_radius_ &&
+      boid_->CheckIfVisible(neighbor_boid->GetPosition())) {
     sum_pos += neighbor_boid->GetPosition();
     n++;
   }
@@ -841,6 +860,25 @@ Double3 CalculateNeighborData2::GetCentreOfMass() {
     return (sum_pos / static_cast<double>(n));
   else
     return {0, 0, 0};
+}
+
+void Flocking2NeighborAnalysis::operator()(Agent* neighbor, double squared_distance) {
+  auto* neighbor_boid = bdm_static_cast<const Boid*>(neighbor);
+  double dist = (boid_->GetPosition() - neighbor_boid->GetPosition()).Norm();
+
+  if (dist <= boid_->boid_interaction_radius_ &&
+      boid_->CheckIfVisible(neighbor_boid->GetPosition())) {
+    sum_dist_interacion_r += dist;
+    n++;
+  }
+}
+
+double Flocking2NeighborAnalysis::GetAvgDist_InteractionR() {
+  if (n != 0)
+    return sum_dist_interacion_r / n;
+  else
+    // no neighbor boids within boid_interaction_radius_
+    return -1;
 }
 
 }  // namespace bdm

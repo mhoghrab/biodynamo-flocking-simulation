@@ -34,14 +34,17 @@ struct SimParam : public ParamGroup {
   double obstacle_avoidance_weight = 5;
 
   // Flocking 2 Algorithm
-  double c_a_1 = 0.075;
-  double c_a_2 = 2 * sqrt(c_a_1);
-  double c_b_1 = 0.2;
-  double c_b_2 = 2 * sqrt(c_b_1);
+  double c_a_1 = 0.2;
+  double c_a_2 = 0.1;
+  double c_b_1 = 0.25;
+  double c_b_2 = 0.1;
   double c_y = 0.15;
   double eps = 0.1;
-  double h_a = 0.2;
+  double h_a = 0.25;
   double h_b = 0.5;
+
+  //
+  std::string test_setup = "obstacle_flocking";
 
   //
   double d_t = 0.1;

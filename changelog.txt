@@ -5,3 +5,8 @@ added new steering force (in Boid::GetFlocking2Force) towards center of boid mas
 added Double3 Normalized() function to finally fix a "bug"....
 
 removed unneccasary setters/ getters
+
+
+///////////////
+
+added FreeFlocking Behaviour

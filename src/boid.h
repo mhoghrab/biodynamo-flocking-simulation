@@ -273,6 +273,12 @@ struct Flocking2 : public Behavior {
   void Run(Agent* agent) override;
 };
 
+struct FreeFlocking : public Behavior {
+  BDM_BEHAVIOR_HEADER(FreeFlocking, Behavior, 1);
+
+  void Run(Agent* agent) override;
+};
+
 // Functor class needed to calculate neighbor data in Flocking2
 // ForEachNeighbor call
 class CalculateNeighborData2 : public Functor<void, Agent*, double> {
@@ -288,6 +294,21 @@ class CalculateNeighborData2 : public Functor<void, Agent*, double> {
 
   Boid* boid_;
   Double3 u_a = {0, 0, 0}, sum_pos = {0, 0, 0};
+  int n = 0;
+};
+
+// Functor class to calculate various Data for Analysis / Export
+class Flocking2NeighborAnalysis : public Functor<void, Agent*, double> {
+ public:
+  Flocking2NeighborAnalysis(Boid* boid) : boid_(boid) {}
+  virtual ~Flocking2NeighborAnalysis() {}
+
+  void operator()(Agent* neighbor, double squared_distance) override;
+
+  double GetAvgDist_InteractionR();
+
+  Boid* boid_;
+  double sum_dist_interacion_r = 0;
   int n = 0;
 };
 

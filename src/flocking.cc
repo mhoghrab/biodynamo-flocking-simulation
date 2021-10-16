@@ -20,10 +20,9 @@ int Simulate(int argc, const char** argv) {
   auto* sparam = param->Get<SimParam>();
   auto* scheduler = simulation.GetScheduler();
 
-  // Initializing the wold geometry / obstacles
-  // CreateRootObstacles();
+  // Creating and initializing obstacles
   CreateSphereObstacles();
-  // CreateCuboidObstacles();
+  CreateCuboidObstacles();
   InitializeRootGeometry();
 
   // spawning boids
@@ -32,26 +31,31 @@ int Simulate(int argc, const char** argv) {
   double x_vel = 0, y_vel = 0, z_vel = 0;
 
   for (size_t i = 0; i < n_boids; ++i) {
-    x_coord = random->Uniform(100, 300);
-    y_coord = random->Uniform(850, 1150);
-    z_coord = random->Uniform(850, 1150);
-    // x_coord = 100;
-    // y_coord = 1000;
-    // z_coord = 1000;
-    // x_coord = random->Uniform(param->min_bound, param->max_bound);
-    // y_coord = random->Uniform(param->min_bound, param->max_bound);
-    // z_coord = random->Uniform(param->min_bound, param->max_bound);
+    auto* boid = new Boid();
 
-    // int vel_bound = 2;
-    x_vel = 4;
-    // y_vel = random->Uniform(-vel_bound, vel_bound);
-    // z_vel = random->Uniform(-vel_bound, vel_bound);
+    if (sparam->test_setup == "free_flocking") {
+      double box_width = 50;
+      x_coord = (param->max_bound - param->min_bound) / 2 +
+                random->Uniform(0, box_width);
+      y_coord = (param->max_bound - param->min_bound) / 2 +
+                random->Uniform(0, box_width);
+      z_coord = (param->max_bound - param->min_bound) / 2 +
+                random->Uniform(0, box_width);
 
-    auto* boid = new Boid({x_coord, y_coord, z_coord});
-    boid->SetVelocity({x_vel, y_vel, z_vel});
+      boid->SetPosition({x_coord, y_coord, z_coord});
+      boid->SetVelocity({x_vel, y_vel, z_vel});
+      boid->AddBehavior(new FreeFlocking());
+    } else {
+      x_coord = random->Uniform(100, 300);
+      y_coord = random->Uniform(850, 1150);
+      z_coord = random->Uniform(850, 1150);
+
+      boid->SetPosition({x_coord, y_coord, z_coord});
+      boid->SetVelocity({x_vel, y_vel, z_vel});
+      boid->AddBehavior(new Flocking2());
+    }
 
     boid->InitializeMembers();
-    boid->AddBehavior(new Flocking2());
     rm->AddAgent(boid);
   }
 
