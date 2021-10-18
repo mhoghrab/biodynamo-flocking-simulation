@@ -44,7 +44,7 @@ struct SimParam : public ParamGroup {
   double h_b = 0.5;
 
   //
-  std::string test_setup = "obstacle_flocking";
+  std::string test_setup = "free_flocking";
 
   //
   double d_t = 0.1;

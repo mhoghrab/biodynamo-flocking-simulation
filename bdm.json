@@ -2,7 +2,7 @@
   "bdm::Param": {
     "remove_output_dir_contents": true,
     "compute_target": "cuda",
-    "statistics": true,
+    "statistics": false,
     "bound_space": true,
     "max_bound": 2000,
     "min_bound": 0,
@@ -18,11 +18,11 @@
   },
   "bdm::SimParam": {
     "_typename": "bdm::SimParam",
-    "n_boids": 100,
+    "n_boids": 30,
     "actual_diameter": 10,
     "perception_angle_deg": 180,
     "boid_perception_radius": 200,
-    "boid_interaction_radius": 90,
+    "boid_interaction_radius": 70,
     "obstacle_perception_radius": 150,
     "neighbor_distance": 50,
     "obstacle_distance": 50,

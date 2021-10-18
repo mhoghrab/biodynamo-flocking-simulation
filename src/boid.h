@@ -213,6 +213,10 @@ class Boid : public Agent {
   double c_y_;
   double eps_ = 0.1;
   double h_a_ = 0.2, h_b_ = 0.4;
+
+  // this vector stores the average distance to all boids within
+  // boid_interaction_radius_ for each timestep
+  std::vector<double> avg_dist_r_i_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -305,6 +309,7 @@ class Flocking2NeighborAnalysis : public Functor<void, Agent*, double> {
 
   void operator()(Agent* neighbor, double squared_distance) override;
 
+  // returns the avg dist or -1 if there are no neighbors
   double GetAvgDist_InteractionR();
 
   Boid* boid_;
