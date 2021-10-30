@@ -175,11 +175,11 @@ class Boid : public Agent {
 
   double Phi(double z);
 
-  double phi_h(double z, double h);
+  double rho_h(double z, double h);
 
-  double phi_h_a(double z, double h);
+  double rho_h_a(double z, double h);
 
-  double phi_h_inv(double z, double h);
+  double rho_h_inv(double z, double h);
 
   double sigmoid_1(double z);
 

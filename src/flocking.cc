@@ -22,7 +22,7 @@ int Simulate(int argc, const char** argv) {
 
   // Creating and initializing obstacles
   CreateSphereObstacles();
-  CreateCuboidObstacles();
+  //CreateCuboidObstacles();
   InitializeRootGeometry();
 
   // spawning boids
