@@ -43,13 +43,6 @@ Double3 ClampUpperLower(Double3 vector, double upper_limit,
   return vector;
 }
 
-Double3 Normalized(Double3 vector) {
-  if (vector.Norm() == 0)
-    return vector;
-  else
-    return vector / vector.Norm();
-}
-
 std::vector<Double3> TransformDirections(std::vector<Double3> directions,
                                          Double3 ref_A, Double3 ref_B) {
   // rotates ref_A onto ref_B and applies same rotaion onto all vectors in
@@ -77,7 +70,7 @@ std::vector<Double3> TransformDirections(std::vector<Double3> directions,
   Double3 axis = {ref_A[1] * ref_B[2] - ref_A[2] * ref_B[1],
                   ref_A[2] * ref_B[0] - ref_A[0] * ref_B[2],
                   ref_A[0] * ref_B[1] - ref_A[1] * ref_B[0]};
-  axis = Normalized(axis);
+  axis = GetNormalizedArray(axis);
   double cos_half_angle = cos(angle / 2);
   double sin_half_angle = sin(angle / 2);
 
@@ -149,7 +142,7 @@ std::vector<Double3> GetConeDirections() {
     double z = 1 / tan(cone_angle_rad);
 
     Double3 direction = {x, y, z};
-    directions.at(i) = Normalized(direction);
+    directions.at(i) = GetNormalizedArray(direction);
   }
   return directions;
 }
@@ -234,7 +227,7 @@ void Boid::SetVelocity(Double3 velocity) {
   velocity_ = ClampUpperLower(velocity, max_speed_, min_speed_);
   velocity_ = velocity;
   if (velocity_.Norm() != 0) {
-    heading_direction_ = Normalized(velocity_);
+    heading_direction_ = GetNormalizedArray(velocity_);
   }
 }
 
@@ -261,7 +254,7 @@ bool Boid::CheckIfVisible(Double3 point) {
   }
 
   Double3 cone_normal = heading_direction_;
-  Double3 direction_normal = Normalized(point - GetPosition());
+  Double3 direction_normal = GetNormalizedArray(point - GetPosition());
   double cos_angle = cone_normal * direction_normal;
 
   // check if obstacle obstructs view to point
@@ -317,7 +310,7 @@ Double3 Boid::SteerTowards(Double3 vector) {
   if (vector.Norm() == 0) {
     return {0, 0, 0};
   }
-  Double3 steer = Normalized(vector * crusing_speed_ - velocity_);
+  Double3 steer = GetNormalizedArray(vector * crusing_speed_ - velocity_);
   return UpperLimit(steer, max_force_);
 }
 
@@ -496,7 +489,7 @@ Double3 Boid::GetFlocking2CentreTerm(Double3 centre_of_mass) {
   double h = boid_interaction_radius_ / max_effect_dist;
   double scale = phi_h_inv(
       Norm_sig(centre_of_mass - GetPosition()) / Norm_sig(max_effect_dist), h);
-  return Normalized(centre_of_mass - GetPosition()) * scale * 0.1;
+  return GetNormalizedArray(centre_of_mass - GetPosition()) * scale * 0.1;
 }
 
 Double3 Boid::GetBoidInteractionTerm(const Boid* boid) {
@@ -507,7 +500,7 @@ Double3 Boid::GetBoidInteractionTerm(const Boid* boid) {
     // Double3 n_ij = (position - GetPosition()) /
     //                sqrt(1 + eps_ * pow((position - GetPosition()).Norm(),
     //                2));
-    Double3 n_ij = Normalized(boid->GetPosition() - GetPosition());
+    Double3 n_ij = GetNormalizedArray(boid->GetPosition() - GetPosition());
 
     u_a += n_ij * Phi_a(Norm_sig(boid->GetPosition() - GetPosition())) * c_a_1_;
 
@@ -535,7 +528,7 @@ Double3 Boid::GetSphereInteractionTerm(SphereObstacle* sphere) {
     // first term
     // Double3 n_ik = (q_ik - GetPosition()) /
     //                sqrt(1 + eps_ * pow((q_ik - GetPosition()).Norm(), 2));
-    Double3 n_ik = Normalized(q_ik - GetPosition());
+    Double3 n_ik = GetNormalizedArray(q_ik - GetPosition());
 
     u_b += n_ik * Phi_b(Norm_sig(q_ik - GetPosition())) * c_b_1_;
 
@@ -561,7 +554,7 @@ Double3 Boid::GetCuboidInteractionTerm(CuboidObstacle* cuboid) {
     // first term
     // Double3 n_ik = (q_ik - GetPosition()) /
     //                sqrt(1 + eps_ * pow((q_ik - GetPosition()).Norm(), 2));
-    Double3 n_ik = Normalized(q_ik - GetPosition());
+    Double3 n_ik = GetNormalizedArray(q_ik - GetPosition());
 
     u_b += n_ik * Phi_b(Norm_sig(q_ik - GetPosition())) * c_b_1_;
 
@@ -601,7 +594,7 @@ Double3 Boid::GetProjectedPosition(CuboidObstacle* cuboid) {
 Double3 Boid::GetProjectedVelocity(SphereObstacle* sphere) {
   // double my = sphere->radius_ / (GetPosition() - sphere->centre_).Norm();
   Double3 a = GetPosition() - sphere->centre_;
-  a = Normalized(a);
+  a = GetNormalizedArray(a);
 
   Double3 projected_normal = a * (a * velocity_);
   Double3 projected_velocity = (velocity_ - projected_normal);  // * my;
@@ -611,7 +604,7 @@ Double3 Boid::GetProjectedVelocity(SphereObstacle* sphere) {
 
 Double3 Boid::GetProjectedVelocity(CuboidObstacle* cuboid) {
   Double3 a = GetPosition() - GetProjectedPosition(cuboid);
-  a = Normalized(a);
+  a = GetNormalizedArray(a);
 
   Double3 projected_normal = a * (a * velocity_);
   Double3 projected_velocity = (velocity_ - projected_normal);
