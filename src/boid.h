@@ -18,7 +18,7 @@ Double3 LowerLimit(Double3 vector, double lower_limit);
 
 Double3 ClampUpperLower(Double3 vector, double upper_limit, double lower_limit);
 
-Double3 Normalized(Double3 vector);
+Double3 GetNormalizedArray(Double3 vector);
 
 // rotates ref_A onto ref_B and applies same rotaion onto all vectors in
 // directions and returns a new vector
@@ -91,7 +91,7 @@ class Boid : public Agent {
   Double3 AvoidDomainBoundary();
 
   // Returns a Steering-Force in order to steer velocity towards
-  // (Normalized(vector) * crusing_speed_)
+  // (GetNormalizedArray(vector) * crusing_speed_)
   // Force is limited by max_force_
   Double3 SteerTowards(Double3 vector);
 
