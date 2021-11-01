@@ -490,13 +490,13 @@ Double3 Boid::GetFlocking2NavigationalFeedbackForce() {
 }
 
 Double3 Boid::GetFlocking2CentreTerm(Double3 centre_of_mass) {
-  // double max_effect_dist =
-  //     boid_interaction_radius_ +
-  //     0.3 * (boid_perception_radius_ - boid_interaction_radius_);
-  // double h = boid_interaction_radius_ / max_effect_dist;
-  // double scale = rho_h_inv(
-  //     Norm_sig(centre_of_mass - GetPosition()) / Norm_sig(max_effect_dist), h);
-  // return GetNormalizedArray(centre_of_mass - GetPosition()) * scale * 0.3;
+  double max_effect_dist =
+      boid_interaction_radius_ +
+      0.3 * (boid_perception_radius_ - boid_interaction_radius_);
+  double h = boid_interaction_radius_ / max_effect_dist;
+  double scale = rho_h_inv(
+      Norm_sig(centre_of_mass - GetPosition()) / Norm_sig(max_effect_dist), h);
+  return GetNormalizedArray(centre_of_mass - GetPosition()) * scale * 0.3;
 }
 
 Double3 Boid::GetBoidInteractionTerm(const Boid* boid) {
