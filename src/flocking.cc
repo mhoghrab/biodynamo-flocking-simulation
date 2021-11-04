@@ -22,7 +22,7 @@ int Simulate(int argc, const char** argv) {
 
   // Creating and initializing obstacles
   CreateSphereObstacles();
-  //CreateCuboidObstacles();
+  CreateCuboidObstacles();
   InitializeRootGeometry();
 
   // spawning boids
@@ -33,7 +33,7 @@ int Simulate(int argc, const char** argv) {
   for (size_t i = 0; i < n_boids; ++i) {
     auto* boid = new Boid();
 
-    if (sparam->test_setup == "free_flocking") {
+    if (sparam->test_setup == "free flocking") {
       double box_width = 50;
       x_coord = (param->max_bound - param->min_bound) / 2 +
                 random->Uniform(0, box_width);
@@ -52,7 +52,7 @@ int Simulate(int argc, const char** argv) {
 
       boid->SetPosition({x_coord, y_coord, z_coord});
       boid->SetVelocity({x_vel, y_vel, z_vel});
-      boid->AddBehavior(new Flocking2());
+      boid->AddBehavior(new Flocking());
     }
 
     boid->InitializeMembers();

@@ -34,7 +34,7 @@ struct FlockingAnalysisOP : public StandaloneOperationImpl {
     rm->ForEachAgent([](Agent* agent) {
       auto* boid = dynamic_cast<Boid*>(agent);
       auto* ctxt = Simulation::GetActive()->GetExecutionContext();
-      Flocking2NeighborAnalysis Data(boid);
+      FlockingNeighborAnalysis Data(boid);
       ctxt->ForEachNeighbor(Data, *boid, pow(boid->boid_perception_radius_, 2));
 
       // save the avg distance in avg_dist_r_i_

@@ -8,7 +8,7 @@
     "min_bound": 0,
     "simulation_step_freq": 10,
     "simulation_time_step": 0.01,
-    "visualization_interval": 10,
+    "visualization_interval": 20,
     "export_visualization": true,
     "visualize_agents": {
       "Boid": [
@@ -18,7 +18,7 @@
   },
   "bdm::SimParam": {
     "_typename": "bdm::SimParam",
-    "n_boids": 20,
+    "n_boids": 200,
     "actual_diameter": 10,
     "perception_angle_deg": 120,
     "boid_perception_radius": 200,
@@ -26,11 +26,11 @@
     "obstacle_perception_radius": 150,
     "neighbor_distance": 50,
     "obstacle_distance": 50,
-    "max_force": 0.15,
+    "max_force": 0.9,
     "max_speed": 4,
     "min_speed": 0,
     "crusing_speed": 4,
-    "simulation_steps": 4000,
-    "obstacles_obstruct_view_": true
+    "simulation_steps": 12000,
+    "obstacles_obstruct_view": true
   }
 }

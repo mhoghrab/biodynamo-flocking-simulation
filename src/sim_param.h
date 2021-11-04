@@ -26,28 +26,21 @@ struct SimParam : public ParamGroup {
   uint64_t simulation_steps;
   bool obstacles_obstruct_view = true;
 
-  double obst_avoid_dist = 150;
-  double cohesion_weight = 1;
-  double alignment_weight = 2;
-  double seperation_weight = 1.5;
-  double avoid_domain_boundary_weight = 25;
-  double obstacle_avoidance_weight = 5;
-
   // Flocking 2 Algorithm
   double c_a_1 = 0.2;
   double c_a_2 = 0.1;
-  double c_b_1 = 0.25;
-  double c_b_2 = 0.1;
-  double c_y = 0.15;
+  double c_b_1 = 0.2;
+  double c_b_2 = 0.4;
+  double c_y = 0.1;
   double eps = 0.1;
   double h_a = 0.25;
   double h_b = 0.5;
 
   //
-  std::string test_setup = "obst_flocking";
+  std::string test_setup = "flocking";
 
   //
-  double d_t = 0.1;
+  double d_t = 0.05;
 };
 
 }  // namespace bdm

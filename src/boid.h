@@ -20,11 +20,6 @@ Double3 ClampUpperLower(Double3 vector, double upper_limit, double lower_limit);
 
 Double3 GetNormalizedArray(Double3 vector);
 
-// rotates ref_A onto ref_B and applies same rotaion onto all vectors in
-// directions and returns a new vector
-std::vector<Double3> TransformDirections(std::vector<Double3> directions,
-                                         Double3 ref_A, Double3 ref_B);
-
 ////////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------//
 // Boid Class                                                                 //
@@ -68,7 +63,8 @@ class Boid : public Agent {
   void SetDiameter(double diameter) override;
 
   // ---------------------------------------------------------------------------
-  // Important Setter that have to update other variables as well
+  // Important setter that have to update/initialize other variables in the
+  // process as well
 
   Double3 GetVelocity() const;
   void SetVelocity(Double3 velocity);
@@ -83,17 +79,20 @@ class Boid : public Agent {
 
   // ---------------------------------------------------------------------------
 
-  // Returns bool wether given point is inside viewing cone defined by
+  // Returns bool wether given point is visible by the boid
+  // It checks if the point is inside the viewing cone defined by
   // heading_direction_ and perception_angle_
   bool CheckIfVisible(Double3 point);
-
-  // Returns a Steering-Force to avoid colliding into domain boundaries
-  Double3 AvoidDomainBoundary();
 
   // Returns a Steering-Force in order to steer velocity towards
   // (GetNormalizedArray(vector) * crusing_speed_)
   // Force is limited by max_force_
   Double3 SteerTowards(Double3 vector);
+
+  // Returns bool weather a (root) obstacle is in the given direction and within
+  // distance from the postition vector
+  bool DirectionIsUnobstructed(Double3 direction, Double3 position,
+                               double distance);
 
   // ---------------------------------------------------------------------------
   // Data Updates
@@ -115,49 +114,37 @@ class Boid : public Agent {
   void AccelerationAccumulator(Double3 acceleration_to_add);
 
   // Returns the position vector, but if a coordinate exceeds the boundarys it
-  // will get set to the opposite site of the somain
+  // will get set to the opposite site of the domain
   Double3 UpdatePositionTorus(Double3 position);
 
   // ---------------------------------------------------------------------------
-  // Obstacle Avoidance
+  // Flocking Algorithm
 
-  // Returns a Steering-Force to avoid colliding into world geometry obstacles
-  Double3 ObstacleAvoidance();
-
-  bool DirectionIsUnobstructed(Double3 direction, Double3 position,
-                               double distance);
-
-  // iterates over the transformed directions returned by
-  // distance) is found; if all directions are obstructed returns the one with
-  // the furthest away obstacle
-  Double3 GetUnobstructedDirection();
-
-  // ---------------------------------------------------------------------------
-  // Flocking2 Algorithm
-
-  // iterates over all neightbors and adds the interaction terms;
+  // iterates over all neightbor boids and adds the interaction terms;
   // returns a flocking force that produces a-latices in free space
-  Double3 GetFlocking2Force();
+  Double3 GetFlockingForce();
 
   // iterates over all spherical and cuboid obstacles and adds the interaction
   // terms; returns a force to avoid them and keep the desired distance
-  Double3 GetFlocking2ObstacleAvoidanceForce();
+  Double3 GetObstacleAvoidanceForce();
 
-  Double3 GetFlocking2NavigationalFeedbackForce();
+  // To do
+  Double3 GetNavigationalFeedbackForce();
 
-  Double3 GetFlocking2CentreTerm(Double3 centre_of_mass);
+  // To do
+  Double3 GetExtendedCohesionTerm(Double3 centre_of_mass);
 
-  // returns the interaction force for a given boid
+  // returns the interaction term for a given boid
   Double3 GetBoidInteractionTerm(const Boid* boid);
 
-  // returns the interaction force for a given sphere
+  // returns the interaction term for a given sphere
   Double3 GetSphereInteractionTerm(SphereObstacle* sphere);
 
-  // returns the interaction force for a given cuboid
+  // returns the interaction term for a given cuboid
   Double3 GetCuboidInteractionTerm(CuboidObstacle* cuboid);
 
-  // funcions to project the boids position / velocity onto a obstacele sphere
-  // or cuboid
+  // funcions that project the boids position / velocity onto a obstacele sphere
+  // or cuboid (orthogonal projection)
   Double3 GetProjectedPosition(SphereObstacle* sphere);
 
   Double3 GetProjectedPosition(CuboidObstacle* cuboid);
@@ -196,16 +183,13 @@ class Boid : public Agent {
   double boid_perception_radius_, boid_interaction_radius_,
       obstacle_perception_radius_;
   double perception_angle_, cos_perception_angle_;
-  double neighbor_distance_, obst_avoid_dist_, obstacle_distance_;
+  double boid_distance_, obstacle_distance_;
   double max_force_, min_speed_, crusing_speed_, max_speed_;
-  double cohesion_weight_, alignment_weight_, seperation_weight_,
-      avoid_domain_boundary_weight_, obstacle_avoidance_weight_;
   bool obstacles_obstruct_view_ = true;
-  static const std::vector<Double3> directions_;
 
   TGeoNavigator* navig_;
 
-  // Flocking2 constants
+  // Flocking constants
   double c_a_1_;
   double c_a_2_;
   double c_b_1_;
@@ -231,64 +215,18 @@ struct Flocking : public Behavior {
   void Run(Agent* agent) override;
 };
 
-// Functor class needed to calculate neighbor data in Flocking ForEachNeighbor
-// call
-class CalculateNeighborData : public Functor<void, Agent*, double> {
- public:
-  CalculateNeighborData(Boid* boid) : boid_(boid) {
-    boid_position_ = boid_->GetPosition();
-    sum_position_ = {0, 0, 0};
-    sum_vel_ = {0, 0, 0};
-    sum_diff_pos_ = {0, 0, 0};
-    sum_seperation_dir_exp = {0, 0, 0};
-    n = 0;
-  }
-  virtual ~CalculateNeighborData() {}
-
-  void operator()(Agent* neighbor, double squared_distance) override;
-
-  Double3 GetCentreOfMassDir();
-
-  Double3 GetSeperationDir();
-
-  Double3 GetSeperationDir_Exp();
-
-  Double3 GetAvgVel();
-
- private:
-  Boid* boid_;
-  Double3 boid_position_;
-  Double3 sum_position_;
-  Double3 sum_vel_;
-  Double3 sum_diff_pos_;
-  Double3 sum_seperation_dir_exp;
-  int n;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------//
-// Flocking2 Behaviour                                                        //
-//----------------------------------------------------------------------------//
-////////////////////////////////////////////////////////////////////////////////
-
-struct Flocking2 : public Behavior {
-  BDM_BEHAVIOR_HEADER(Flocking2, Behavior, 1);
-
-  void Run(Agent* agent) override;
-};
-
 struct FreeFlocking : public Behavior {
   BDM_BEHAVIOR_HEADER(FreeFlocking, Behavior, 1);
 
   void Run(Agent* agent) override;
 };
 
-// Functor class needed to calculate neighbor data in Flocking2
+// Functor class needed to calculate neighbor data in Flocking
 // ForEachNeighbor call
-class CalculateNeighborData2 : public Functor<void, Agent*, double> {
+class CalculateNeighborData : public Functor<void, Agent*, double> {
  public:
-  CalculateNeighborData2(Boid* boid) : boid_(boid) {}
-  virtual ~CalculateNeighborData2() {}
+  CalculateNeighborData(Boid* boid) : boid_(boid) {}
+  virtual ~CalculateNeighborData() {}
 
   void operator()(Agent* neighbor, double squared_distance) override;
 
@@ -302,10 +240,10 @@ class CalculateNeighborData2 : public Functor<void, Agent*, double> {
 };
 
 // Functor class to calculate various Data for Analysis / Export
-class Flocking2NeighborAnalysis : public Functor<void, Agent*, double> {
+class FlockingNeighborAnalysis : public Functor<void, Agent*, double> {
  public:
-  Flocking2NeighborAnalysis(Boid* boid) : boid_(boid) {}
-  virtual ~Flocking2NeighborAnalysis() {}
+  FlockingNeighborAnalysis(Boid* boid) : boid_(boid) {}
+  virtual ~FlockingNeighborAnalysis() {}
 
   void operator()(Agent* neighbor, double squared_distance) override;
 
