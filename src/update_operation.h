@@ -16,6 +16,15 @@ struct UpdateOp : public StandaloneOperationImpl {
 
     rm->ForEachAgent([](Agent* agent) {
       auto* boid = dynamic_cast<Boid*>(agent);
+
+      // add wind force
+      const auto* sparam =
+          bdm::Simulation::GetActive()->GetParam()->Get<SimParam>();
+
+      if (sparam->apply_wind_field) {
+        boid->acceleration_ += boid->CalculateWindForce();
+      }
+
       boid->UpdateNewVelocity();
       boid->UpdateNewPosition();
       boid->UpdateData();

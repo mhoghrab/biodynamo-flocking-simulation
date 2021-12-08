@@ -1,5 +1,0 @@
-solve: how can boids catch up to flock
-
-GetExtendedCohesionTerm
-
-GetNavigationalFeedbackForce

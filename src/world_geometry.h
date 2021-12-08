@@ -15,6 +15,10 @@ void CreateRootObstacles();
 
 void InitializeRootGeometry();
 
+void CreateObstacleSetup_0();
+
+void CreateWallObstacle();
+
 // ---------------------------------------------------------------------------
 
 struct SphereObstacle {

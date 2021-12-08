@@ -12,6 +12,8 @@ namespace bdm {
 // ---------------------------------------------------------------------------
 // Double3 Methods
 
+double NormSq(Double3 vector);
+
 Double3 UpperLimit(Double3 vector, double upper_limit);
 
 Double3 LowerLimit(Double3 vector, double lower_limit);
@@ -20,11 +22,15 @@ Double3 ClampUpperLower(Double3 vector, double upper_limit, double lower_limit);
 
 Double3 GetNormalizedArray(Double3 vector);
 
+Double3 GetRandomVectorInUnitSphere();
+
 ////////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------//
 // Boid Class                                                                 //
 //----------------------------------------------------------------------------//
 ////////////////////////////////////////////////////////////////////////////////
+
+// void InitializeWindField();
 
 class Boid : public Agent {
   BDM_AGENT_HEADER(Boid, Agent, 1);
@@ -77,15 +83,16 @@ class Boid : public Agent {
 
   void SetPerceptionAngle(double angle);
 
-  // ---------------------------------------------------------------------------
+  void SetHeadingDirection(Double3 dir);
 
+  // ---------------------------------------------------------------------------
   // Returns bool wether given point is visible by the boid
   // It checks if the point is inside the viewing cone defined by
   // heading_direction_ and perception_angle_
   bool CheckIfVisible(Double3 point);
 
   // Returns a Steering-Force in order to steer velocity towards
-  // (GetNormalizedArray(vector) * crusing_speed_)
+  // (GetNormalizedArray(vector) * max_speed_)
   // Force is limited by max_force_
   Double3 SteerTowards(Double3 vector);
 
@@ -112,10 +119,6 @@ class Boid : public Agent {
 
   // Right now simply adds acc2add to the stored acceleration_
   void AccelerationAccumulator(Double3 acceleration_to_add);
-
-  // Returns the position vector, but if a coordinate exceeds the boundarys it
-  // will get set to the opposite site of the domain
-  Double3 UpdatePositionTorus(Double3 position);
 
   // ---------------------------------------------------------------------------
   // Flocking Algorithm
@@ -166,7 +169,7 @@ class Boid : public Agent {
 
   double rho_h_a(double z, double h);
 
-  double rho_h_inv(double z, double h);
+  double zeta(double z, double h_onset, double h_maxeff);
 
   double sigmoid_1(double z);
 
@@ -177,6 +180,16 @@ class Boid : public Agent {
   double Phi_b(double z);
 
   // ---------------------------------------------------------------------------
+  // wind is currently only supported for bounded domains ("bound_space": true)
+  // when using a torus domain coordinates still are bigger than the domain
+  // boundrays which causes the current implementation to break (index out of
+  // bound for the wind array)
+
+  Double3 CalculateWindForce();
+
+  Double3 GetWindVelocity();
+
+  // ---------------------------------------------------------------------------
   Double3 new_position_, new_velocity_;
   Double3 acceleration_, velocity_, heading_direction_;
   double actual_diameter_;
@@ -184,19 +197,26 @@ class Boid : public Agent {
       obstacle_perception_radius_;
   double perception_angle_, cos_perception_angle_;
   double boid_distance_, obstacle_distance_;
-  double max_force_, min_speed_, crusing_speed_, max_speed_;
+  double max_force_, min_speed_, max_speed_;
   bool obstacles_obstruct_view_ = true;
+
+  double acc_scalar_ = 0;
 
   TGeoNavigator* navig_;
 
   // Flocking constants
   double c_a_1_;
   double c_a_2_;
+  double c_a_3_;
   double c_b_1_;
   double c_b_2_;
   double c_y_;
   double eps_ = 0.1;
   double h_a_ = 0.2, h_b_ = 0.4;
+
+  // ref to wind field data
+  // static double* wind_data;
+  // static size_t xdim_wind, ydim_wind, zdim_wind, vector_dim_wind;
 
   // this vector stores the average distance to all boids within
   // boid_interaction_radius_ for each timestep

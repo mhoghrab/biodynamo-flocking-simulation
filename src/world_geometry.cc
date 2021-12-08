@@ -51,6 +51,27 @@ void CreateRootObstacles() {
   // gGeoManager->Export("world_geometry.gdml");
 }
 
+void CreateObstacleSetup_0() {
+  auto cuboid_0 = new CuboidObstacle({550, 0, 0}, {850, 2000, 1000});
+  CuboidObstacle::cuboid_obstacles.push_back(*cuboid_0);
+
+  auto sphere_0 = new SphereObstacle({1200, 1090, 1200}, 150);
+  SphereObstacle::sphere_obstacles.push_back(*sphere_0);
+
+  auto sphere_1 = new SphereObstacle({1400, 850, 1300}, 80);
+  SphereObstacle::sphere_obstacles.push_back(*sphere_1);
+}
+
+void CreateWallObstacle() {
+  const auto *param = bdm::Simulation::GetActive()->GetParam();
+  double width = 200;
+  double centre = (param->max_bound + param->min_bound) / 2;
+
+  auto cuboid_0 =
+      new CuboidObstacle({centre, -1000, -1000}, {centre + width, 1000, 1000});
+  CuboidObstacle::cuboid_obstacles.push_back(*cuboid_0);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Sphere and Cuboid Obstacles
 ////////////////////////////////////////////////////////////////////////////////
@@ -109,7 +130,10 @@ SphereObstacle::SphereObstacle(Double3 centre, double radius) {
 std::vector<SphereObstacle> SphereObstacle::sphere_obstacles;
 
 void CreateSphereObstacles() {
-  auto sphere_0 = new SphereObstacle({1000, 1000, 1000}, 100);
+  const auto *param = bdm::Simulation::GetActive()->GetParam();
+  double centre = (param->max_bound + param->min_bound) / 2;
+
+  auto sphere_0 = new SphereObstacle({centre, centre, centre}, 100);
   SphereObstacle::sphere_obstacles.push_back(*sphere_0);
 }
 
@@ -123,7 +147,13 @@ CuboidObstacle::CuboidObstacle(Double3 lower_bound, Double3 upper_bound) {
 std::vector<CuboidObstacle> CuboidObstacle::cuboid_obstacles;
 
 void CreateCuboidObstacles() {
-  auto cuboid_0 = new CuboidObstacle({650, 950, 950}, {750, 1050, 1050});
+  const auto *param = bdm::Simulation::GetActive()->GetParam();
+  double width = 200;
+  double centre = (param->max_bound + param->min_bound) / 2;
+
+  auto cuboid_0 = new CuboidObstacle(
+      {centre - width / 2, centre - width / 2, centre - width / 2},
+      {centre + width / 2, centre + width / 2, centre + width / 2});
   CuboidObstacle::cuboid_obstacles.push_back(*cuboid_0);
 }
 

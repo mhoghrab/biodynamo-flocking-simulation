@@ -22,25 +22,32 @@ struct SimParam : public ParamGroup {
   double max_force;
   double max_speed;
   double min_speed;
-  double crusing_speed;
   uint64_t simulation_steps;
   bool obstacles_obstruct_view = true;
 
   // Flocking 2 Algorithm
-  double c_a_1 = 0.2;
-  double c_a_2 = 0.1;
-  double c_b_1 = 0.2;
-  double c_b_2 = 0.4;
-  double c_y = 0.1;
-  double eps = 0.1;
-  double h_a = 0.25;
-  double h_b = 0.5;
+  double c_a_1;
+  double c_a_2;
+  double c_a_3;
+  double c_b_1;
+  double c_b_2;
+  double c_y;
+  double eps;
+  double h_a;
+  double h_b;
 
-  //
+  double d_t;
+
   std::string test_setup = "flocking";
 
-  //
-  double d_t = 0.05;
+  bool export_distances = false;
+
+  // wind field stuff
+  std::string wind_field_path_npy = "pywind/data/wind.npy";
+  bool apply_wind_field = false;
+  double c_wind_turb;
+  double c_wind_mean;
+  double c_wind_force;
 };
 
 }  // namespace bdm

@@ -1,4 +1,5 @@
 #include "boid.h"
+#include <cnpy.h>
 #include "core/container/math_array.h"
 #include "sim_param.h"
 
@@ -6,6 +7,12 @@ namespace bdm {
 
 // ---------------------------------------------------------------------------
 // Double3 Methods
+double NormSq(Double3 vector) {
+  double res = 0;
+  for (size_t i = 0; i < 3; i++)
+    res += vector[i] * vector[i];
+  return res;
+}
 
 Double3 UpperLimit(Double3 vector, double upper_limit) {
   double length = vector.Norm();
@@ -51,11 +58,57 @@ Double3 GetNormalizedArray(Double3 vector) {
     return vector.GetNormalizedArray();
 }
 
+Double3 GetRandomVectorInUnitSphere() {
+  auto* random = Simulation::GetActive()->GetRandom();
+
+  double phi = random->Uniform(0, 2 * M_PI);
+  double costheta = random->Uniform(-1, 1);
+  double u = random->Uniform(0, 1);
+
+  double theta = acos(costheta);
+  double r = sqrt(u);
+
+  double x_coord = r * sin(theta) * cos(phi);
+  double y_coord = r * sin(theta) * sin(phi);
+  double z_coord = r * cos(theta);
+
+  Double3 vec = {x_coord, y_coord, z_coord};
+  return vec;
+
+  // bool found = false;
+  // while (!found) {
+  //   double x = random->Uniform(-1, 1);
+  //   double y = random->Uniform(-1, 1);
+  //   double z = random->Uniform(-1, 1);
+  //   Double3 vec = {x, y, z};
+
+  //   if (vec.Norm() <= 1) {
+  //     found = true;
+  //     return vec;
+  //   }
+  // }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------//
 // Boid Class                                                                 //
 //----------------------------------------------------------------------------//
 ////////////////////////////////////////////////////////////////////////////////
+
+// double Boid::wind_data;
+// size_t Boid::xdim_wind, Boid::ydim_wind, Boid::zdim_wind,
+// Boid::vector_dim_wind;
+
+// void InitializeWindField() {
+//   cnpy::NpyArray arr = cnpy::npy_load("src/pywind/data/wind.npy");
+//   double data = *arr.data<double>();
+//   Boid::wind_data = data;
+
+//   Boid::xdim_wind = arr.shape[0];
+//   Boid::ydim_wind = arr.shape[1];
+//   Boid::zdim_wind = arr.shape[2];
+//   Boid::vector_dim_wind = arr.shape[3];
+// }
 
 void Boid::InitializeMembers() {
   const auto* param = Simulation::GetActive()->GetParam();
@@ -77,7 +130,6 @@ void Boid::InitializeMembers() {
 
   max_force_ = sparam->max_force;
   min_speed_ = sparam->min_speed;
-  crusing_speed_ = sparam->crusing_speed;
   max_speed_ = sparam->max_speed;
 
   obstacles_obstruct_view_ = sparam->obstacles_obstruct_view;
@@ -90,6 +142,7 @@ void Boid::InitializeMembers() {
   c_b_1_ = sparam->c_b_1;
   c_b_2_ = sparam->c_b_2;
   c_y_ = sparam->c_y;
+  c_a_3_ = sparam->c_a_3;
   eps_ = sparam->eps;
   h_a_ = sparam->h_a;
   h_b_ = sparam->h_b;
@@ -142,6 +195,11 @@ void Boid::SetPerceptionAngle(double angle) {
   cos_perception_angle_ = std::cos(angle);
 }
 
+void Boid::SetHeadingDirection(Double3 dir) {
+  if (dir.Norm() != 0) {
+    heading_direction_ = GetNormalizedArray(dir);
+  }
+}
 // ---------------------------------------------------------------------------
 
 bool Boid::CheckIfVisible(Double3 point) {
@@ -172,7 +230,7 @@ Double3 Boid::SteerTowards(Double3 vector) {
   if (vector.Norm() == 0) {
     return {0, 0, 0};
   }
-  Double3 steer = vector.GetNormalizedArray() * crusing_speed_ - velocity_;
+  Double3 steer = vector.GetNormalizedArray() * max_speed_ - velocity_;
   return steer;
   return UpperLimit(steer, max_force_);
 }
@@ -197,20 +255,21 @@ void Boid::UpdateNewPosition() {
   const auto* sparam = param->Get<SimParam>();
 
   new_position_ += new_velocity_ * sparam->d_t;
-  // new_position_ = UpdatePositionTorus(new_position_);
 }
 
 void Boid::UpdateNewVelocity() {
   const auto* param = Simulation::GetActive()->GetParam();
   const auto* sparam = param->Get<SimParam>();
 
-  acceleration_ == acceleration_ * sparam->d_t;
-  // acceleration_ = UpperLimit(acceleration_, max_force_);
-  new_velocity_ += acceleration_;
+  acceleration_ = UpperLimit(acceleration_, max_force_);
+  new_velocity_ += acceleration_ * sparam->d_t;
   new_velocity_ = ClampUpperLower(new_velocity_, max_speed_, min_speed_);
 }
 
-void Boid::ResetAcceleration() { acceleration_ = {0, 0, 0}; }
+void Boid::ResetAcceleration() {
+  acceleration_ = {0, 0, 0};
+  acc_scalar_ = 0;
+}
 
 void Boid::UpdateData() {
   SetVelocity(new_velocity_);
@@ -218,7 +277,7 @@ void Boid::UpdateData() {
 }
 
 void Boid::AccelerationAccumulator(Double3 acceleration_to_add) {
-  size_t nr = 1;
+  size_t nr = 2;
 
   switch (nr) {
     case 0:
@@ -237,36 +296,17 @@ void Boid::AccelerationAccumulator(Double3 acceleration_to_add) {
         double lambda = (-b + sqrt(b * b - 4 * a * c)) / (2 * a);
 
         acceleration_ += acceleration_to_add * lambda;
-        // std::cout << "acc exceeded" << std::endl;
+      }
+    case 2:
+      if (acc_scalar_ + acceleration_to_add.Norm() <= max_force_) {
+        acc_scalar_ += acceleration_to_add.Norm();
+        acceleration_ += acceleration_to_add;
+      } else {
+        double s = max_force_ - acc_scalar_;
+        acc_scalar_ = max_force_;
+        acceleration_ += acceleration_to_add * s;
       }
   }
-}
-
-Double3 Boid::UpdatePositionTorus(Double3 position) {
-  const auto* param = Simulation::GetActive()->GetParam();
-  double min_bound = param->min_bound;
-  double max_bound = param->max_bound;
-
-  if (position[0] > max_bound) {
-    position[0] = min_bound;
-  }
-  if (position[1] > max_bound) {
-    position[1] = min_bound;
-  }
-  if (position[2] > max_bound) {
-    position[2] = min_bound;
-  }
-
-  if (position[0] < min_bound) {
-    position[0] = max_bound;
-  }
-  if (position[1] < min_bound) {
-    position[1] = max_bound;
-  }
-  if (position[2] < min_bound) {
-    position[2] = max_bound;
-  }
-  return position;
 }
 
 // ---------------------------------------------------------------------------
@@ -279,7 +319,7 @@ Double3 Boid::GetFlockingForce() {
 
   Double3 force = {0, 0, 0};
   force += NeighborData.GetU_a();
-  // force += GetExtendedCohesionTerm(NeighborData.GetCentreOfMass());
+  force += GetExtendedCohesionTerm(NeighborData.GetCentreOfMass());
 
   return force;
 }
@@ -299,7 +339,7 @@ Double3 Boid::GetObstacleAvoidanceForce() {
 }
 
 Double3 Boid::GetNavigationalFeedbackForce() {
-  Double3 target_pos = {4000, 1000, 1000};
+  Double3 target_pos = {100000, 0, 0};
   // Double3 target_vel = {0, 0, 0};
   // double c_1 = 1, c_2 = 0;
   // Double3 u_y =
@@ -310,13 +350,16 @@ Double3 Boid::GetNavigationalFeedbackForce() {
 }
 
 Double3 Boid::GetExtendedCohesionTerm(Double3 centre_of_mass) {
-  double max_effect_dist =
-      boid_interaction_radius_ +
-      0.3 * (boid_perception_radius_ - boid_interaction_radius_);
-  double h = boid_interaction_radius_ / max_effect_dist;
-  double scale = rho_h_inv(
-      Norm_sig(centre_of_mass - GetPosition()) / Norm_sig(max_effect_dist), h);
-  return GetNormalizedArray(centre_of_mass - GetPosition()) * scale * 0.1;
+  double ratio =
+      (centre_of_mass - GetPosition()).Norm() / boid_perception_radius_;
+  double h_onset = boid_interaction_radius_ / boid_perception_radius_;
+  double h_maxeff = h_onset * 1.2;
+
+  double scale = zeta(ratio, h_onset, h_maxeff);
+
+  Double3 result =
+      GetNormalizedArray(centre_of_mass - GetPosition()) * scale * c_a_3_;
+  return result;
 }
 
 Double3 Boid::GetBoidInteractionTerm(const Boid* boid) {
@@ -361,7 +404,8 @@ Double3 Boid::GetSphereInteractionTerm(SphereObstacle* sphere) {
     // ---------------------------------------------------------------------------
     // velocity term
     double b_ik = rho_h(
-        Norm_sig(q_ik - GetPosition()) / Norm_sig(2 * obstacle_distance_), 0.1);
+        Norm_sig(q_ik - GetPosition()) / Norm_sig(obstacle_perception_radius_),
+        h_b_);
     u_b += (GetProjectedVelocity(sphere) - GetVelocity()) * b_ik * c_b_2_;
   }
 
@@ -385,8 +429,10 @@ Double3 Boid::GetCuboidInteractionTerm(CuboidObstacle* cuboid) {
 
     // ---------------------------------------------------------------------------
     // velocity term
+    // obstacle_perception_radius_ or obstacle_distance_????
     double b_ik = rho_h(
-        Norm_sig(q_ik - GetPosition()) / Norm_sig(obstacle_distance_), h_b_);
+        Norm_sig(q_ik - GetPosition()) / Norm_sig(obstacle_perception_radius_),
+        h_b_);
     u_b += (GetProjectedVelocity(cuboid) - GetVelocity()) * b_ik * c_b_2_;
   }
 
@@ -447,7 +493,7 @@ bool Boid::IsHeadingTowards(Double3 point) {
 }
 
 double Boid::Norm_sig(Double3 z) {
-  return (std::sqrt(1 + eps_ * pow(z.Norm(), 2)) - 1) / eps_;
+  return (std::sqrt(1 + eps_ * NormSq(z)) - 1) / eps_;
 }
 
 double Boid::Norm_sig(double z) {
@@ -485,14 +531,21 @@ double Boid::rho_h_a(double z, double h) {
   return 0;
 }
 
-double Boid::rho_h_inv(double z, double h) {
-  if (z < h) {
+double Boid::zeta(double z, double h_onset, double h_maxeff) {
+  if (z < h_onset) {
     return 0;
+  } else if (z >= h_onset && z <= h_maxeff) {
+    return (1 + cos(M_PI * (h_maxeff - z) / (h_maxeff - h_onset))) / 2;
+  } else {
+    return 1;
   }
-  if (z >= h && z <= 1) {
-    return (1 + cos(M_PI * z / (1 - h))) / 2;
-  }
-  return 1;
+  // } else if (z >= h_maxeff && z <= 1) {
+  //   return 1;
+  // } else if (z >= h_offset && z <= 1) {
+  //   return (1 + cos(M_PI * (z - h_offset) / (1 - h_offset))) / 2;
+  // } else {
+  //   return 0;
+  // }
 }
 
 double Boid::sigmoid_1(double z) { return z / std::sqrt(1 + z * z); }
@@ -512,6 +565,67 @@ double Boid::Phi_b(double z) {
   return rho_h(z / d_b, h_b_) * (sigmoid_2(z - d_b) - 1) * 0.5;
 }
 
+// ---------------------------------------------------------------------------
+
+cnpy::NpyArray arr = cnpy::npy_load("src/pywind/data/wind.npy");
+double* wind_data = arr.data<double>();
+size_t xdim_wind = arr.shape[0];
+size_t ydim_wind = arr.shape[1];
+size_t zdim_wind = arr.shape[2];
+size_t vector_dim_wind = arr.shape[3];
+
+Double3 Boid::CalculateWindForce() {
+  auto* sparam = bdm::Simulation::GetActive()->GetParam()->Get<SimParam>();
+  Double3 v_wind = GetWindVelocity();
+  Double3 v_rel = v_wind - velocity_;
+
+  Double3 f_wind = v_rel * v_rel.Norm() * sparam->c_wind_force;
+  return f_wind;
+}
+
+Double3 Boid::GetWindVelocity() {
+  auto* param = bdm::Simulation::GetActive()->GetParam();
+  auto* sparam = param->Get<SimParam>();
+  double max_bound = param->max_bound;
+  double min_bound = param->min_bound;
+  double d = max_bound - min_bound;
+
+  auto factor_1 = ydim_wind * zdim_wind * vector_dim_wind;
+  auto factor_2 = zdim_wind * vector_dim_wind;
+  auto factor_3 = vector_dim_wind;
+
+  Double3 coords_shifted = GetPosition();
+  coords_shifted -= min_bound;
+  coords_shifted[0] /= d / xdim_wind;
+  coords_shifted[1] /= d / ydim_wind;
+  coords_shifted[2] /= d / zdim_wind;
+
+  // find corresponding grid index
+  // we use floor instead of ceil as in the thesis since idices start at 0
+  auto x_idx = (int)coords_shifted[0];
+  auto y_idx = (int)coords_shifted[1];
+  auto z_idx = (int)coords_shifted[2];
+  // std::cout << x_idx << ',' << y_idx << ',' << z_idx << std::endl;
+  // std::cout << GetPosition() << std::endl;
+
+  Double3 wind_turb;
+  for (int l = 0; l < 3; l++) {
+    wind_turb[l] =
+        wind_data[factor_1 * x_idx + factor_2 * y_idx + factor_3 * z_idx + l];
+  }
+  // std::cout << "iteration complete" << std::endl;
+
+  // wind is as of now only the divergence free turbulence field
+  // we now add a divergence free mean wind field
+  // we use the trivial choice of a constant vector (1,0,0)
+  Double3 wind_mean = {1, 0, 0};
+
+  Double3 wind =
+      wind_turb * sparam->c_wind_turb + wind_mean * sparam->c_wind_mean;
+
+  return wind;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------//
 // Flocking Behaviour                                                         //
@@ -526,7 +640,6 @@ void Flocking::Run(Agent* agent) {
   Double3 flocking_navigational_feedback_force =
       boid->GetNavigationalFeedbackForce();
 
-  boid->ResetAcceleration();
   boid->AccelerationAccumulator(flocking_obstacle_avoidance_force);
   boid->AccelerationAccumulator(flocking_force);
   boid->AccelerationAccumulator(flocking_navigational_feedback_force);
@@ -536,12 +649,7 @@ void FreeFlocking::Run(Agent* agent) {
   auto* boid = dynamic_cast<Boid*>(agent);
 
   Double3 flocking_force = boid->GetFlockingForce();
-  // Double3 flocking_navigational_feedback_force =
-  // boid->GetNavigationalFeedbackForce();
-
-  boid->ResetAcceleration();
   boid->AccelerationAccumulator(flocking_force);
-  // boid->AccelerationAccumulator(flocking_navigational_feedback_force);
 }
 
 void CalculateNeighborData::operator()(Agent* neighbor,
@@ -564,9 +672,9 @@ void CalculateNeighborData::operator()(Agent* neighbor,
 
 Double3 CalculateNeighborData::GetCentreOfMass() {
   if (n != 0)
-    return (sum_pos / static_cast<double>(n));
+    return (sum_pos / n);
   else
-    return {0, 0, 0};
+    return boid_->GetPosition();
 }
 
 void FlockingNeighborAnalysis::operator()(Agent* neighbor,

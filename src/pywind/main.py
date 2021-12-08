@@ -131,6 +131,9 @@ def Main():
     print("Computing convolution ..")
     wind = RF.sample(noise)
 
+    # scale wind data so that vectory components and therefore maginitude are/is roughly bounded by 1
+    wind /= (2.5*100000000)
+
     # --------------------------------------------------------------------------
     #   EXPORT WIND FIELD TO DISK
     # --------------------------------------------------------------------------
