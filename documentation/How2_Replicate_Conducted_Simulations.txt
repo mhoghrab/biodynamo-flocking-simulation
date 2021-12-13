@@ -71,3 +71,5 @@ Wind settings
 "simulation_setup": "wind"
 "apply_wind_field": true
 "limit_speed": false
+
+create a windfield of desired size first
