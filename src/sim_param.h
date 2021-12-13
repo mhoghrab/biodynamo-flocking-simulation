@@ -2,6 +2,7 @@
 #define SIM_PARAM_H_
 
 #include "biodynamo.h"
+#include "core/container/math_array.h"
 
 namespace bdm {
 
@@ -11,36 +12,41 @@ namespace bdm {
 struct SimParam : public ParamGroup {
   BDM_PARAM_GROUP_HEADER(SimParam, 1);
 
-  size_t n_boids;
-  double actual_diameter;
-  double perception_angle_deg;
-  double boid_perception_radius;
-  double boid_interaction_radius;
-  double obstacle_perception_radius;
-  double neighbor_distance;
-  double obstacle_distance;
-  double max_force;
-  double max_speed;
-  double min_speed;
-  uint64_t simulation_steps;
+  size_t n_boids = 250;
+  double starting_sphere_radius = 150;
+  double actual_diameter = 10;
+  double perception_angle_deg = 150;
+  double boid_perception_radius = 250;
+  double boid_interaction_radius = 70;
+  double obstacle_perception_radius = 200;
+  double neighbor_distance = 50;
+  double obstacle_distance = 50;
+  double max_accel = 0.4;
+  double max_speed = 5;
+  uint64_t computational_steps;
   bool obstacles_obstruct_view = true;
+  bool limit_speed = true;
 
   // Flocking 2 Algorithm
-  double c_a_1;
-  double c_a_2;
-  double c_a_3;
-  double c_b_1;
-  double c_b_2;
-  double c_y;
-  double eps;
-  double h_a;
-  double h_b;
+  double c_a_1 = 0.37;
+  double c_a_2 = 0.05;
+  double c_a_3 = 0.05;
+  double c_b_1 = 0.45;
+  double c_b_2 = 0.1;
+  double c_y = 0.05;
+  double eps = 0.1;
+  double h_a = 0.25;
+  double h_b = 0.6;
 
-  double d_t;
+  double d_t = 0.05;
 
-  std::string test_setup = "flocking";
+  Double3 pos_gamma = {2000, 0, 0};
+  Double3 wind_mean = {1, 0, 0};
+
+  std::string simulation_setup;
 
   bool export_distances = false;
+  bool export_velocity = false;
 
   // wind field stuff
   std::string wind_field_path_npy = "pywind/data/wind.npy";

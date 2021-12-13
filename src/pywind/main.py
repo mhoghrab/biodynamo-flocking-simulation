@@ -6,7 +6,7 @@
 #   the atmospheric boundary layer" , B. Keith, U. Khristenko, B. Wohlmuth
 #   Physics of Fluids 33 (9), 095110, https://doi.org/10.1063/5.0064394
 # The original (and way more exhaustive) source code can be found here:
-#   https://doi.org/10.5281/zenodo.5076306
+#   https://doi.org/10.5281/zenodo. 
 #
 # Here, we only use the core functionality and keep it rather basic.
 #
@@ -93,7 +93,7 @@ def Main():
     L = 0.59 * reference_height
 
     # Parameters to steer the the size of the output shape (not 100% clear yet)
-    noise_shape = np.array([250, 250, 250, 3])
+    noise_shape = np.array([300, 300, 300, 3])
     grid_levels = np.array([5, 5, 5])
 
     # Define the Covariance-Kernel. There are different kernels available but

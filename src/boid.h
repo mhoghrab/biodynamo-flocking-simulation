@@ -30,8 +30,6 @@ Double3 GetRandomVectorInUnitSphere();
 //----------------------------------------------------------------------------//
 ////////////////////////////////////////////////////////////////////////////////
 
-// void InitializeWindField();
-
 class Boid : public Agent {
   BDM_AGENT_HEADER(Boid, Agent, 1);
 
@@ -93,7 +91,7 @@ class Boid : public Agent {
 
   // Returns a Steering-Force in order to steer velocity towards
   // (GetNormalizedArray(vector) * max_speed_)
-  // Force is limited by max_force_
+  // Force is limited by max_accel_
   Double3 SteerTowards(Double3 vector);
 
   // Returns bool weather a (root) obstacle is in the given direction and within
@@ -108,7 +106,7 @@ class Boid : public Agent {
   void UpdateNewPosition();
 
   // Update new_velocity_ by adding acceleration_ and clamping it by
-  // max_speed_ and min_speed_
+  // max_speed_
   void UpdateNewVelocity();
 
   // Sets acceleration_ to {0,0,0}
@@ -197,7 +195,7 @@ class Boid : public Agent {
       obstacle_perception_radius_;
   double perception_angle_, cos_perception_angle_;
   double boid_distance_, obstacle_distance_;
-  double max_force_, min_speed_, max_speed_;
+  double max_accel_, max_speed_;
   bool obstacles_obstruct_view_ = true;
 
   double acc_scalar_ = 0;
@@ -212,15 +210,18 @@ class Boid : public Agent {
   double c_b_2_;
   double c_y_;
   double eps_ = 0.1;
-  double h_a_ = 0.2, h_b_ = 0.4;
-
-  // ref to wind field data
-  // static double* wind_data;
-  // static size_t xdim_wind, ydim_wind, zdim_wind, vector_dim_wind;
+  double h_a_ = 0.25, h_b_ = 0.6;
+  Double3 pos_gamma_;  // gamma agent location
 
   // this vector stores the average distance to all boids within
   // boid_interaction_radius_ for each timestep
   std::vector<double> avg_dist_r_i_;
+
+  // this vector stores the velocity at each calculation step
+  std::vector<double> vel_data_;
+
+  // this vector stores the position at each calculation step
+  std::vector<double> pos_data_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -235,8 +236,8 @@ struct Flocking : public Behavior {
   void Run(Agent* agent) override;
 };
 
-struct FreeFlocking : public Behavior {
-  BDM_BEHAVIOR_HEADER(FreeFlocking, Behavior, 1);
+struct FreeSpaceFlocking : public Behavior {
+  BDM_BEHAVIOR_HEADER(FreeSpaceFlocking, Behavior, 1);
 
   void Run(Agent* agent) override;
 };

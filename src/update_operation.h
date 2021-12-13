@@ -34,8 +34,8 @@ struct UpdateOp : public StandaloneOperationImpl {
   }
 };
 
-struct FlockingAnalysisOP : public StandaloneOperationImpl {
-  BDM_OP_HEADER(FlockingAnalysisOP);
+struct SaveAvgDistOP : public StandaloneOperationImpl {
+  BDM_OP_HEADER(SaveAvgDistOP);
   void operator()() override {
     auto* sim = Simulation::GetActive();
     auto* rm = sim->GetResourceManager();
@@ -52,4 +52,33 @@ struct FlockingAnalysisOP : public StandaloneOperationImpl {
   }
 };
 
+struct SaveVelOP : public StandaloneOperationImpl {
+  BDM_OP_HEADER(SaveVelOP);
+  void operator()() override {
+    auto* sim = Simulation::GetActive();
+    auto* rm = sim->GetResourceManager();
+
+    rm->ForEachAgent([](Agent* agent) {
+      auto* boid = dynamic_cast<Boid*>(agent);
+
+      // save the velovity_ in vel_data_
+      (boid->vel_data_).push_back(boid->velocity_.Norm());
+    });
+  }
+};
+
+struct SavePosVelOP : public StandaloneOperationImpl {
+  BDM_OP_HEADER(SavePosVelOP);
+  void operator()() override {
+    auto* sim = Simulation::GetActive();
+    auto* rm = sim->GetResourceManager();
+
+    rm->ForEachAgent([](Agent* agent) {
+      auto* boid = dynamic_cast<Boid*>(agent);
+
+      (boid->vel_data_).push_back(boid->velocity_.Norm());
+      (boid->pos_data_).push_back(boid->GetPosition().Norm());
+    });
+  }
+};
 #endif  // UPDATE_OP_H_

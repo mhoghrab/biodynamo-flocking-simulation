@@ -1,4 +1,5 @@
 // don't delete this comment or the whole program crashes, no joke...
+// might be fixed by now but let's not risk it ;P
 #ifndef FLOCKING_H_
 #define FLOCKING_H_
 
