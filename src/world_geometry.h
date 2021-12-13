@@ -1,4 +1,5 @@
 // don't delete this comment or the whole program crashes, no joke... #2
+// might be fixed by now but let's not risk it ;P
 #ifndef WORLD_GEOMETRY_H_
 #define WORLD_GEOMETRY_H_
 
@@ -14,6 +15,10 @@ void CreateRootObstacles();
 ////////////////////////////////////////////////////////////////////////////////
 
 void InitializeRootGeometry();
+
+void CreateObstacleSetup_0();
+
+void CreateWallObstacle();
 
 // ---------------------------------------------------------------------------
 

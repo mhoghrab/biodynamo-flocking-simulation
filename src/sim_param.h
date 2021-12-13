@@ -2,6 +2,7 @@
 #define SIM_PARAM_H_
 
 #include "biodynamo.h"
+#include "core/container/math_array.h"
 
 namespace bdm {
 
@@ -11,40 +12,48 @@ namespace bdm {
 struct SimParam : public ParamGroup {
   BDM_PARAM_GROUP_HEADER(SimParam, 1);
 
-  size_t n_boids;
-  double actual_diameter;
-  double perception_angle_deg;
-  double boid_perception_radius;
-  double boid_interaction_radius;
-  double obstacle_perception_radius;
-  double neighbor_distance;
-  double obstacle_distance;
-  double max_force;
-  double max_speed;
-  double min_speed;
-  double crusing_speed;
-  uint64_t simulation_steps;
+  size_t n_boids = 250;
+  double starting_sphere_radius = 150;
+  double actual_diameter = 10;
+  double perception_angle_deg = 150;
+  double boid_perception_radius = 250;
+  double boid_interaction_radius = 70;
+  double obstacle_perception_radius = 200;
+  double neighbor_distance = 50;
+  double obstacle_distance = 50;
+  double max_accel = 0.4;
+  double max_speed = 5;
+  uint64_t computational_steps;
   bool obstacles_obstruct_view = true;
-
-  double obst_avoid_dist = 150;
-  double cohesion_weight = 1;
-  double alignment_weight = 2;
-  double seperation_weight = 1.5;
-  double avoid_domain_boundary_weight = 25;
-  double obstacle_avoidance_weight = 5;
+  bool limit_speed = true;
 
   // Flocking 2 Algorithm
-  double c_a_1 = 0.075;
-  double c_a_2 = 2 * sqrt(c_a_1);
-  double c_b_1 = 0.2;
-  double c_b_2 = 2 * sqrt(c_b_1);
-  double c_y = 0.15;
+  double c_a_1 = 0.37;
+  double c_a_2 = 0.05;
+  double c_a_3 = 0.05;
+  double c_b_1 = 0.45;
+  double c_b_2 = 0.1;
+  double c_y = 0.05;
   double eps = 0.1;
-  double h_a = 0.2;
-  double h_b = 0.5;
+  double h_a = 0.25;
+  double h_b = 0.6;
 
-  //
-  double d_t = 0.1;
+  double d_t = 0.05;
+
+  Double3 pos_gamma = {2000, 0, 0};
+  Double3 wind_mean = {1, 0, 0};
+
+  std::string simulation_setup;
+
+  bool export_distances = false;
+  bool export_velocity = false;
+
+  // wind field stuff
+  std::string wind_field_path_npy = "pywind/data/wind.npy";
+  bool apply_wind_field = false;
+  double c_wind_turb;
+  double c_wind_mean;
+  double c_wind_force;
 };
 
 }  // namespace bdm
