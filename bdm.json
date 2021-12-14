@@ -42,6 +42,7 @@
     "c_wind_force": 0.005,
     "computational_steps": 10000,
     "simulation_setup": "free_space",
+    "apply_wind_field": false,
     "export_distances": false,
     "export_velocity": false
   }
