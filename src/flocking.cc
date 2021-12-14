@@ -171,14 +171,14 @@ int Simulate(int argc, const char** argv) {
   // ---------------------------------------------------------------------------
   // to export the avg distance for a boid to it's neighbors at each
   // timestep we saved them in a vector for each boid
-  // this vector get's exported as a line in output/avg_dist_r_i.csv
+  // this vector get's exported as a line in output/avg_dist_data.csv
   // the csv will have the boids as a line an the distance in each
   // simulation step as the column
+  // entry of -1 if no neigbors
   // 2do nicht so blöd alles machen ;P
 
   if (sparam->export_distances) {
-    std::remove("output/data/avg_dist.csv");
-
+    std::remove("output/avg_dist_data.csv");
     rm->ForEachAgent([](Agent* agent) {
       auto* boid = dynamic_cast<Boid*>(agent);
       const auto* sparam =
@@ -186,7 +186,7 @@ int Simulate(int argc, const char** argv) {
       int f = (int)(1 / sparam->d_t);
       int n_sim_steps = (int)(sparam->computational_steps / f);
 
-      std::ofstream myFile("output/data/avg_dist.csv", std::ios::app);
+      std::ofstream myFile("output/avg_dist_data.csv", std::ios::app);
 
       for (int i = 0; i < n_sim_steps; i++) {
         int idx = i * 20;
@@ -198,7 +198,7 @@ int Simulate(int argc, const char** argv) {
   }
 
   if (sparam->export_velocity) {
-    std::remove("output/data/vel_data.csv");
+    std::remove("output/vel_data.csv");
 
     rm->ForEachAgent([](Agent* agent) {
       auto* boid = dynamic_cast<Boid*>(agent);
@@ -207,7 +207,7 @@ int Simulate(int argc, const char** argv) {
       int f = (int)(1 / sparam->d_t);
       int n_sim_steps = (int)(sparam->computational_steps / f);
 
-      std::ofstream myFile("output/data/vel_data.csv", std::ios::app);
+      std::ofstream myFile("output/vel_data.csv", std::ios::app);
 
       for (int i = 0; i < n_sim_steps; i++) {
         int idx = i * 20;
@@ -219,7 +219,7 @@ int Simulate(int argc, const char** argv) {
   }
 
   if (simulation_setup == "wind_deacc") {
-    std::remove("output/data/wind_deacc.csv");
+    std::remove("output/wind_deacc.csv");
 
     rm->ForEachAgent([](Agent* agent) {
       auto* boid = dynamic_cast<Boid*>(agent);
@@ -228,7 +228,7 @@ int Simulate(int argc, const char** argv) {
       int f = (int)(1 / sparam->d_t);
       int n_sim_steps = (int)(sparam->computational_steps / f);
 
-      std::ofstream myFile("output/data/wind_deacc.csv", std::ios::app);
+      std::ofstream myFile("output/wind_deacc.csv", std::ios::app);
 
       for (int i = 0; i < n_sim_steps; i++) {
         int idx = i * 20;
