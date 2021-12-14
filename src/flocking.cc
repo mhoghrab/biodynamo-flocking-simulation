@@ -151,7 +151,7 @@ int Simulate(int argc, const char** argv) {
   // neighbors at each simulation step and saves it in boid->avg_dist_r_i_
   if (sparam->export_distances) {
     OperationRegistry::GetInstance()->AddOperationImpl(
-        "SaveSaveAvgDistOP", OpComputeTarget::kCpu, new SaveAvgDistOP());
+        "SaveAvgDistOP", OpComputeTarget::kCpu, new SaveAvgDistOP());
     auto* op = NewOperation("SaveAvgDistOP");
     scheduler->ScheduleOp(op, OpType::kPostSchedule);
   }
