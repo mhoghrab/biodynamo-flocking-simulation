@@ -17,9 +17,9 @@
   "bdm::SimParam": {
     "_typename": "bdm::SimParam",
     "n_boids": 250,
-    "starting_sphere_radius": 100,
+    "starting_sphere_radius": 200,
     "perception_angle_deg": 150,
-    "boid_interaction_radius": 150,
+    "boid_interaction_radius": 70,
     "boid_perception_radius": 250,
     "neighbor_distance": 50,
     "obstacle_perception_radius": 200,
@@ -29,7 +29,7 @@
     "limit_speed": true,
     "c_a_1": 0.37,
     "c_a_2": 0.05,
-    "c_a_3": 0.00,
+    "c_a_3": 0.05,
     "c_b_1": 0.45,
     "c_b_2": 0.1,
     "c_y": 0.05,
@@ -44,7 +44,6 @@
     "simulation_setup": "free_space",
     "export_distances": false,
     "export_velocity": false,
-    "apply_wind_field": false,
-    "wind_field_path_npy": "pywind/data/wind.npy"
+    "apply_wind_field": false
   }
 }
