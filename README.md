@@ -62,8 +62,11 @@ same settings as in "5.1  Flocking in Free Space: Simulation with extend cohesio
 ```"c_a_3": 0 / 0.05```  
 ```"c_y": 0.05```  
 ```"simulation_setup": "free_space_avg_dist"```  
+```"computational_steps": 100000```  
 ```"export_distances": true```  
 in ```src/sim_param.h```:  ```Double3 pos_gamma = {100000, 0, 0};```  
+
+```"export_visualization"``` can be set to false to speed up execution time due to the very high number of computational steps
 
 ------------------------------------------------------------------------------------------------------------
 5.2 Flocking in the Presence of Obstacles (figure 11, 12, 13)
@@ -88,12 +91,14 @@ The mean wind field can be set in ```src/sim_param.h```: ```wind_mean```. Its de
 ```"c_wind_turb": 0``` 
 ```"c_wind_mean": 4```  
 ```"c_wind_force": 0.005```  
+```"computational_steps": 60000```  
 ```"simulation_setup": "wind"```  
 ```"apply_wind_field": true```  
 
+```"export_visualization"``` can be set to false to speed up execution time due to the very high number of computational steps
 
 ------------------------------------------------------------------------------------------------------------
-5.2 Flocking in the Presence of External Forces: agents drifting in final (turbulent field) (figure 15)
+5.2 Flocking in the Presence of External Forces: agents drifting in final (turbulent field) (figure 17)
 ------------------------------------------------------------------------------------------------------------
 Same settings as in "5.2 Flocking in the Presence of External Forces: avg. velocity within a flock of drifting agents... (figure 15)"  
 Use desired turbulence field and desired domain size.
