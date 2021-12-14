@@ -17,7 +17,7 @@
   "bdm::SimParam": {
     "_typename": "bdm::SimParam",
     "n_boids": 250,
-    "starting_sphere_radius": 200,
+    "starting_sphere_radius": 100,
     "perception_angle_deg": 150,
     "boid_interaction_radius": 70,
     "boid_perception_radius": 250,
@@ -43,7 +43,6 @@
     "computational_steps": 10000,
     "simulation_setup": "free_space",
     "export_distances": false,
-    "export_velocity": false,
-    "apply_wind_field": false
+    "export_velocity": false
   }
 }
