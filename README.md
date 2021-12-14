@@ -14,11 +14,11 @@ The simulation parameters values and default ```bdm.json``` have the values as l
 But make sure to double check in case and experiment with them.
 
 We will give a small instruction on how to replicate the conducted simulations.
-The most important / changed from the default parameters are highlighted for each simulation.
+The most important / changed values from the default parameters in ```bdm.json``` are highlighted for each simulation.
 The data used for our plots is also given in the corresponding output/data_xxx folders alongside a matlab script to plot / visualize them.
 
 Alternatively you can export data from a simulation via the parameters ```export_distances``` and ```export_velocity```.
-These will create a csv file in output/data each. Each line of the file is one agent and in each comlumn the average neigbor distance or agent's velocity is saved.
+These will create a csv file in ```output``` each. Each line of the file is one agent and in each comlumn the average neigbor distance or agent's velocity is saved.
 Keep in mind this will slow downcomputation time.
 The included data folders are:
 - data_free_space: data for figure 10: Plot of the reduced average distance...
@@ -34,11 +34,11 @@ You can now select the wanted obstace as this file has all 3 incorporated.
 ------------------------------------------------------------------------------------------------------------
 ```"n_boids": 250```  
 ```"starting_sphere_radius": 100```  
-```"c_a_3": 0 ```  
+```"limit_speed": true```  
+```"c_a_3": 0.0 ```  
 ```"c_y": 0.0```  
 ```"simulation_setup": "free_space"```  
 ```"apply_wind_field": false```  
-```"limit_speed": true```  
 
 ------------------------------------------------------------------------------------------------------------
 5.1  Flocking in Free Space: Collaps of a flock (figure 8)
@@ -55,27 +55,49 @@ same settings as in "5.1  Flocking in Free Space: Simulation with extend cohesio
 ------------------------------------------------------------------------------------------------------------
 5.1  Flocking in Free Space: Avg neighbor distance (figure 10)
 ------------------------------------------------------------------------------------------------------------
-```"n_boids": 500```  
-```"starting_sphere_radius": 200```  
-```"simulation_setup": "free_space_avg_dist"```  
 ```"max_bound": 50000```  
 ```"min_bound": -50000```  
+```"n_boids": 500```  
+```"starting_sphere_radius": 200```  
 ```"c_a_3": 0 / 0.05```  
 ```"c_y": 0.05```  
+```"simulation_setup": "free_space_avg_dist"```  
 ```"export_distances": true```  
-in sim_param.h:  ```Double3 pos_gamma = {100000, 0, 0};```  
+in ```src/sim_param.h```:  ```Double3 pos_gamma = {100000, 0, 0};```  
 
 ------------------------------------------------------------------------------------------------------------
 5.2 Flocking in the Presence of Obstacles (figure 11, 12, 13)
 ------------------------------------------------------------------------------------------------------------
-```"simulation_setup": "obstacle_spherical" / "obstacle_cuboid" / "obstacle_wall"```  
 ```"max_bound": 1500```  
 ```"min_bound": -1500```  
-in sim_param.h:  ```Double3 pos_gamma = {1000, 0, 0}```  
+```"n_boids": 250```  
+```"starting_sphere_radius": 150```  
+```"c_y": 0.05```  
+```"simulation_setup": "obstacle_spherical" / "obstacle_cuboid" / "obstacle_wall"```  
+in ```src/sim_param.h```:  ```pos_gamma = {1000, 0, 0}```  
 
 ------------------------------------------------------------------------------------------------------------
-5.2 Flocking in the Presence of External Forces (Wind Field Implemenation)
+5.2 Flocking in the Presence of External Forces: avg. velocity within a flock of drifting agents... (figure 15)
 ------------------------------------------------------------------------------------------------------------
+The mean wind field can be set in ```src/sim_param.h```: ```wind_mean```. Its default direction is set to (1,0,0).  
+```"n_boids": 500```  
+```"starting_sphere_radius": 200```  
+```"perception_angle_deg": desired_value_in_deg```  
+```"limit_speed": false```  
+```"c_y": 0.0```  
+```"c_wind_turb": 0``` 
+```"c_wind_mean": 4```  
+```"c_wind_force": 0.005```  
 ```"simulation_setup": "wind"```  
 ```"apply_wind_field": true```  
-```"limit_speed": false```  
+
+
+------------------------------------------------------------------------------------------------------------
+5.2 Flocking in the Presence of External Forces: agents drifting in final (turbulent field) (figure 15)
+------------------------------------------------------------------------------------------------------------
+Same settings as in "5.2 Flocking in the Presence of External Forces: avg. velocity within a flock of drifting agents... (figure 15)"  
+Use desired turbulence field and desired domain size.
+We used a domain size ```"max_bound": 1500```, ```"min_bound": -1500``` and a resulution of 300 sample points in each dimension when generating the wind field.  
+```"perception_angle_deg": 180```  
+```"c_wind_turb": 10``` 
+```"export_velocity": false```  
