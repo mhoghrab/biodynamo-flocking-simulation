@@ -40,7 +40,7 @@ struct SimParam : public ParamGroup {
 
   double d_t = 0.05;
 
-  Double3 pos_gamma = {2000, 0, 0};
+  Double3 pos_gamma = {1000, 0, 0};
   Double3 wind_mean = {1, 0, 0};
 
   std::string simulation_setup;
