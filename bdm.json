@@ -17,7 +17,7 @@
   "bdm::SimParam": {
     "_typename": "bdm::SimParam",
     "n_boids": 250,
-    "starting_sphere_radius": 200,
+    "starting_sphere_radius": 100,
     "perception_angle_deg": 150,
     "boid_interaction_radius": 150,
     "boid_perception_radius": 250,
