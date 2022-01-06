@@ -16,7 +16,7 @@ jobs:
 
     steps:
     
-    - name: Checkout HIV_malawi repository
+    - name: Checkout BDM-FLOCKING-SIMULATION repository
       uses: actions/checkout@v2
     
     - name: Make sure Xcode 12.4 is used on macOS 10.15 as the default /Application/Xcode.app
@@ -51,6 +51,15 @@ jobs:
           -B build
         cmake --build build --parallel --config Release
 
+    - name: Install CNPY
+      run: |
+        cd ..
+        git clone https://github.com/rogersce/cnpy.git
+        cd cnpy
+        mkdir build && cd build
+        cmake .. && make -j4
+        sudo make install
+        
     - name: Build flocking_simulation and run small simulation
       run: |
         . ../biodynamo/build/bin/thisbdm.sh

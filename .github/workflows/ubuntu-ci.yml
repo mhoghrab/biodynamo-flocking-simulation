@@ -59,6 +59,15 @@ jobs:
           -B build
         cmake --build build --parallel --config Release
 
+    - name: Install CNPY
+      run: |
+        cd ..
+        git clone https://github.com/rogersce/cnpy.git
+        cd cnpy
+        mkdir build && cd build
+        cmake .. && make -j4
+        sudo make install
+
     - name: Build flocking_simulation and run small simulation
       run: |
         . ../biodynamo/build/bin/thisbdm.sh
