@@ -29,10 +29,15 @@ include(${BDM_USE_FILE})
 # Load CNPY
 set(CNPY_PATH "/usr/local/include") # PATH to source directore, e.g. cloned git
 set(CNPY_LIB "/usr/local/lib") # PATH to installed directory
+if(APPLE)
+  set(CNPY_LIB_NAME "libcnpy.dylib")
+else()
+  set(CNPY_LIB_NAME "libcnpy.so")
+endif(APPLE)
 include_directories(${CNPY_PATH})
 add_library(cnpy SHARED IMPORTED)
 set_target_properties(cnpy PROPERTIES
-  IMPORTED_LOCATION "${CNPY_LIB}/libcnpy.so"
+  IMPORTED_LOCATION "${CNPY_LIB}/${CNPY_LIB_NAME}"
   INTERFACE_INCLUDE_DIRECTORIES "${CNPY_PATH}"
 )
 
